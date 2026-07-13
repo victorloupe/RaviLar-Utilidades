@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - RaviLar Utilidades</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase JS Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Custom CSS (Reusing site system) -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-body">
+
+    <!-- Sticky Header -->
+    <header class="main-header" id="header">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <!-- Official Logo image used in Header -->
+                <img src="LogoSite.png" alt="RaviLar Utilidades" class="logo-img">
+            </a>
+            
+            <div class="admin-header-actions">
+                <span class="badge admin-badge badge-category"><i class="fa-solid fa-lock"></i> MODO ADMIN</span>
+                <a href="index.html" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar para a Loja
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container">
+        <div class="admin-container">
+            
+            <!-- Dashboard Stats Grid -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-box-open"></i></div>
+                    <div class="stat-info">
+                        <h3 id="stat-total-products">0</h3>
+                        <p>Total de Produtos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-kitchen-set"></i></div>
+                    <div class="stat-info">
+                        <h3 id="stat-cozinha">0</h3>
+                        <p>Cozinha</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-folder-open"></i></div>
+                    <div class="stat-info">
+                        <h3 id="stat-organizacao">0</h3>
+                        <p>Organização</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-wine-glass"></i></div>
+                    <div class="stat-info">
+                        <h3 id="stat-mesa-posta">0</h3>
+                        <p>Mesa Posta</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-couch"></i></div>
+                    <div class="stat-info">
+                        <h3 id="stat-decoracao">0</h3>
+                        <p>Decoração</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" data-tab="produtos">
+                    <i class="fa-solid fa-box-open"></i> Gerenciar Produtos
+                </button>
+                <button class="admin-tab-btn" data-tab="categorias">
+                    <i class="fa-solid fa-tags"></i> Gerenciar Categorias
+                </button>
+                <button class="admin-tab-btn" data-tab="fotos">
+                    <i class="fa-solid fa-images"></i> Gerenciar Banners
+                </button>
+                <button class="admin-tab-btn" data-tab="avaliacoes">
+                    <i class="fa-solid fa-star"></i> Gerenciar Avaliações
+                </button>
+            </div>
+
+            <!-- TAB 1: PRODUCTS MANAGEMENT -->
+            <div class="admin-tab-content active" id="tab-produtos">
+                <div class="admin-content-grid">
+                    
+                    <!-- Product Form Block -->
+                    <section class="admin-card">
+                        <div class="admin-card-header">
+                            <h2 id="form-title">Cadastrar Novo Produto</h2>
+                        </div>
+                        <div class="admin-card-body">
+                            <form id="admin-product-form">
+                                <input type="hidden" id="product-id-field">
+                                
+                                <div class="form-group">
+                                    <label for="admin-product-name">Nome do Produto *</label>
+                                    <input type="text" id="admin-product-name" required placeholder="Ex: Kit Utensílios de Silicone">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="admin-product-category">Categoria *</label>
+                                    <select id="admin-product-category" required>
+                                        <option value="" disabled selected>Carregando categorias...</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="admin-product-price">Preço (R$) *</label>
+                                    <input type="number" id="admin-product-price" step="0.01" required placeholder="0.00">
+                                </div>
+                                
+                                <!-- Drag and Drop Media Upload component -->
+                                <div class="form-group">
+                                    <label>Imagens e Vídeos do Produto *</label>
+                                    
+                                    <div class="media-upload-zone" id="media-drop-zone">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <p>Arraste fotos/vídeos do computador ou clique para selecionar</p>
+                                        <span>Suporta múltiplos arquivos (Imagens e Vídeos MP4)</span>
+                                        <input type="file" id="media-file-input" multiple accept="image/*,video/mp4" style="display: none;">
+                                    </div>
+                                    
+                                    <!-- Progress bar for file upload -->
+                                    <div class="upload-progress-container hide" id="upload-progress-bar">
+                                        <div class="upload-progress-fill" id="upload-progress-fill" style="width: 0%;"></div>
+                                        <span class="upload-progress-text" id="upload-progress-text">Carregando mídias: 0%</span>
+                                    </div>
+
+                                    <!-- Preview Grid for uploaded items -->
+                                    <div class="media-preview-container" id="media-preview-container">
+                                        <!-- Loaded dynamic cards -->
+                                    </div>
+
+                                    <!-- Read-only text area showing media database JSON -->
+                                    <label for="admin-product-image" style="font-size: 0.8rem; margin-top: 16px; color: var(--text-muted);">JSON das URLs das Mídias *</label>
+                                    <textarea id="admin-product-image" required readonly rows="2" placeholder='["https://..."]' style="font-size: 0.8rem; background-color: var(--bg-light); border: 1px solid var(--border-color);"></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="admin-product-badge">Etiqueta/Destaque (Opcional)</label>
+                                    <input type="text" id="admin-product-badge" placeholder="Ex: Oferta, Novidade, Mais Vendido">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="admin-product-description">Descrição Completa *</label>
+                                    <textarea id="admin-product-description" rows="5" required placeholder="Descreva os diferenciais, medidas e materiais do produto..."></textarea>
+                                </div>
+                                
+                                <div class="admin-form-buttons">
+                                    <button type="submit" class="btn btn-primary btn-block" id="form-submit-btn">
+                                        Adicionar Produto <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary hide" id="form-cancel-btn">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Products Table Block -->
+                    <section class="admin-card">
+                        <div class="admin-card-header">
+                            <h2>Gerenciamento do Catálogo</h2>
+                            <div class="search-box" style="flex: 0; min-width: 220px; max-width: 250px;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="admin-table-search" placeholder="Filtrar tabela...">
+                            </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Imagem</th>
+                                        <th>Nome</th>
+                                        <th>Categoria</th>
+                                        <th>Preço</th>
+                                        <th>Destaque</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-table-body">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                            <i class="fa-solid fa-spinner fa-spin fa-2x" style="margin-bottom: 12px; display: block; color: var(--accent-color);"></i>
+                                            Carregando produtos do banco de dados...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Dynamic Table Pagination controls -->
+                        <div class="admin-pagination" id="admin-table-pagination">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- TAB 2: CATEGORIES MANAGEMENT -->
+            <div class="admin-tab-content" id="tab-categorias">
+                <div class="admin-content-grid">
+                    
+                    <!-- Category Form Block -->
+                    <section class="admin-card">
+                        <div class="admin-card-header">
+                            <h2 id="category-form-title">Cadastrar Nova Categoria</h2>
+                        </div>
+                        <div class="admin-card-body">
+                            <!-- Category Add/Edit Form -->
+                            <form id="admin-category-form">
+                                <input type="hidden" id="category-id-field">
+                                
+                                <div class="form-group">
+                                    <label for="admin-category-name">Nome da Categoria *</label>
+                                    <input type="text" id="admin-category-name" required placeholder="Ex: Banheiro">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Capa da Categoria (Arrastar & Soltar) *</label>
+                                    <div class="media-upload-zone" id="category-drop-zone" style="padding: 24px 16px;">
+                                        <i class="fa-solid fa-image" style="font-size: 1.8rem;"></i>
+                                        <p style="font-size: 0.85rem; margin-top: 4px;">Arraste a capa aqui ou clique para selecionar</p>
+                                        <input type="file" id="category-file-input" accept="image/*" style="display: none;">
+                                    </div>
+                                    <!-- Progress indicator for category cover -->
+                                    <div class="upload-progress-container hide" id="category-progress-bar">
+                                        <div class="upload-progress-fill" id="category-progress-fill" style="width: 0%;"></div>
+                                        <span class="upload-progress-text" id="category-progress-text">Enviando capa...</span>
+                                    </div>
+                                    <!-- Saved URL readout -->
+                                    <label for="admin-category-image" style="font-size: 0.8rem; margin-top: 12px; color: var(--text-muted);">URL da Capa da Categoria *</label>
+                                    <input type="text" id="admin-category-image" required readonly style="font-size: 0.8rem; background-color: var(--bg-light); border: 1px solid var(--border-color); width:100%; padding: 8px 12px; border-radius:4px;">
+                                </div>
+                                
+                                <div class="admin-form-buttons">
+                                    <button type="submit" class="btn btn-primary btn-block" id="category-submit-btn">
+                                        Adicionar Categoria <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary hide" id="category-cancel-btn">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Categories list -->
+                    <section class="admin-card">
+                        <div class="admin-card-header">
+                            <h2>Categorias Cadastradas</h2>
+                        </div>
+                        <div class="admin-card-body" id="admin-categories-list" style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="text-align:center; color:var(--text-muted); font-size:0.9rem; padding: 12px 0;">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Carregando categorias...
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- TAB 3: BANNERS MANAGEMENT -->
+            <div class="admin-tab-content" id="tab-fotos">
+                <div class="admin-content-grid">
+                    
+                    <!-- Banner Form Block -->
+                    <section class="admin-card">
+                        <div class="admin-card-header">
+                            <h2 id="banner-form-title">Cadastrar Novo Banner</h2>
+                        </div>
+                        <div class="admin-card-body">
+                            <!-- Banner Add/Edit Form -->
+                            <form id="admin-banner-form">
+                                <input type="hidden" id="banner-id-field">
+                                
+                                <div class="form-group">
+                                    <label for="admin-banner-title">Título do Card *</label>
+                                    <input type="text" id="admin-banner-title" required placeholder="Ex: Design Premium">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="admin-banner-subtitle">Subtítulo do Card *</label>
+                                    <input type="text" id="admin-banner-subtitle" required placeholder="Ex: Qualidade selecionada">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Imagem do Banner (Arrastar & Soltar) *</label>
+                                    <div class="media-upload-zone" id="banner-drop-zone" style="padding: 24px 16px;">
+                                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.8rem;"></i>
+                                        <p style="font-size: 0.85rem; margin-top: 4px;">Arraste a imagem aqui ou clique para selecionar</p>
+                                        <input type="file" id="banner-file-input" accept="image/*" style="display: none;">
+                                    </div>
+                                    <!-- Progress indicator -->
+                                    <div class="upload-progress-container hide" id="banner-progress-bar">
+                                        <div class="upload-progress-fill" id="banner-progress-fill" style="width: 0%;"></div>
+                                        <span class="upload-progress-text" id="banner-progress-text">Enviando imagem...</span>
+                                    </div>
+                                    <!-- Saved URL readout -->
+                                    <label for="admin-banner-image" style="font-size: 0.8rem; margin-top: 12px; color: var(--text-muted);">URL da Imagem do Banner *</label>
+                                    <input type="text" id="admin-banner-image" required readonly style="font-size: 0.8rem; background-color: var(--bg-light); border: 1px solid var(--border-color); width:100%; padding: 8px 12px; border-radius:4px;">
+                                </div>
+                                
+                                <div class="admin-form-buttons">
+                                    <button type="submit" class="btn btn-primary btn-block" id="banner-submit-btn">
+                                        Adicionar Banner <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary hide" id="banner-cancel-btn">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Banners List Block -->
+                    <section class="admin-card">
+                        <div class="admin-card-header">
+                            <h2>Banners Cadastrados</h2>
+                        </div>
+                        <div class="admin-card-body" id="admin-banners-list" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="text-align:center; color:var(--text-muted); font-size:0.9rem; padding: 12px 0;">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Carregando banners...
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- TAB 4: REVIEWS MANAGEMENT -->
+            <div class="admin-tab-content" id="tab-avaliacoes">
+                <div class="admin-content-grid">
+                    
+                    <!-- Review Form Block -->
+                    <section class="admin-card">
+                        <div class="admin-card-header">
+                            <h2 id="review-form-title">Cadastrar Nova Avaliação</h2>
+                        </div>
+                        <div class="admin-card-body">
+                            <!-- Review Add/Edit Form -->
+                            <form id="admin-review-form">
+                                <input type="hidden" id="review-id-field">
+                                
+                                <div class="form-group">
+                                    <label for="admin-review-name">Nome do Cliente *</label>
+                                    <input type="text" id="admin-review-name" required placeholder="Ex: Mariana Sousa">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="admin-review-quote">Depoimento *</label>
+                                    <textarea id="admin-review-quote" required placeholder="Escreva a avaliação do cliente..." style="min-height: 100px; width: 100%; padding: 12px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); font-family: inherit; resize: vertical;"></textarea>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="admin-review-product">Produto Avaliado *</label>
+                                    <select id="admin-review-product" required>
+                                        <option value="" disabled selected>Escolha o produto</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="admin-review-rating">Estrelas *</label>
+                                    <select id="admin-review-rating" required>
+                                        <option value="5">5 Estrelas</option>
+                                        <option value="4">4 Estrelas</option>
+                                        <option value="3">3 Estrelas</option>
+                                        <option value="2">2 Estrelas</option>
+                                        <option value="1">1 Estrela</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="admin-form-buttons">
+                                    <button type="submit" class="btn btn-primary btn-block" id="review-submit-btn">
+                                        Adicionar Avaliação <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary hide" id="review-cancel-btn">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Reviews List Block -->
+                    <section class="admin-card">
+                        <div class="admin-card-header">
+                            <h2>Avaliações Cadastradas</h2>
+                        </div>
+                        <div class="admin-card-body" id="admin-reviews-list" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div style="text-align:center; color:var(--text-muted); font-size:0.9rem; padding: 12px 0;">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Carregando avaliações...
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Administrative Toast Messages -->
+    <div class="admin-status-toast" id="admin-toast">
+        <i class="fa-solid fa-circle-info" id="toast-icon"></i>
+        <span id="toast-message">Mensagem de status</span>
+    </div>
+
+    <!-- Admin Logic Script -->
+    <script src="admin.js"></script>
+</body>
+</html>

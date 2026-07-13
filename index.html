@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RaviLar Utilidades - Utensílios Domésticos e Organização</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Encontre os melhores utensílios domésticos, organizadores e itens de mesa posta na RaviLar Utilidades. Praticidade, qualidade e elegância para o seu lar.">
+    <meta name="keywords" content="utensílios domésticos, organizadores, cozinha, mesa posta, decoração, casa, RaviLar">
+    <meta name="author" content="RaviLar Utilidades">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase JS Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Sticky Header -->
+    <header class="main-header" id="header">
+        <div class="container header-container">
+            <a href="#" class="logo" id="logo-link">
+                <!-- Official Logo image used in Header -->
+                <img src="LogoSite.png" alt="RaviLar Utilidades" class="logo-img">
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="main-nav" id="main-nav">
+                <ul>
+                    <li><a href="#" class="nav-link active">Início</a></li>
+                    <li><a href="#produtos" class="nav-link">Produtos</a></li>
+                    <li><a href="#categorias" class="nav-link">Categorias</a></li>
+                    <li><a href="#depoimentos" class="nav-link">Depoimentos</a></li>
+                    <li><a href="#contato" class="nav-link">Contato</a></li>
+                </ul>
+            </nav>
+
+            <!-- Actions (Cart and Mobile Menu) -->
+            <div class="header-actions">
+                <button class="cart-trigger" id="cart-trigger" aria-label="Abrir carrinho">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-badge" id="cart-badge">0</span>
+                </button>
+                <button class="menu-mobile-trigger" id="menu-mobile-trigger" aria-label="Menu móvel">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="inicio">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <span class="hero-tagline">Tudo para a sua casa</span>
+                <h1>Praticidade e elegância para o seu lar</h1>
+                <p>Descubra nossa linha de utensílios domésticos e organizadores selecionados para facilitar o seu dia a dia e transformar a sua cozinha com beleza e funcionalidade.</p>
+                <div class="hero-cta">
+                    <a href="#produtos" class="btn btn-primary">Ver Produtos <i class="fa-solid fa-arrow-right"></i></a>
+                    <a href="#contato" class="btn btn-secondary">Fale Conosco</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-carousel-container">
+                    <div class="hero-carousel-wrapper" id="hero-3d-carousel">
+                        <!-- Populated dynamically by app.js -->
+                    </div>
+                    
+                    <!-- Carousel Controls -->
+                    <button class="hero-carousel-btn prev" id="hero-carousel-prev" aria-label="Banner anterior">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button class="hero-carousel-btn next" id="hero-carousel-next" aria-label="Próximo banner">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Features / Diferenciais -->
+    <section class="features-section">
+        <div class="container">
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-truck-fast"></i>
+                    </div>
+                    <h3>Envio Rápido</h3>
+                    <p>Entregamos na sua casa com agilidade e embalagem super segura.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h3>Qualidade Premium</h3>
+                    <p>Produtos resistentes, duráveis e com acabamento impecável.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <h3>Atendimento WhatsApp</h3>
+                    <p>Suporte rápido e personalizado diretamente com a nossa equipe.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3>Compra Segura</h3>
+                    <p>Pedido finalizado com praticidade e pagamento facilitado no Pix ou Cartão.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-section" id="categorias">
+        <div class="container">
+            <div class="section-header">
+                <h2>Navegue por Categorias</h2>
+                <p>Encontre exatamente o que você precisa para cada cantinho da sua casa</p>
+            </div>
+            <div class="categories-grid" id="categories-grid">
+                <!-- Dynamically populated by app.js -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Catalog Section / Produtos -->
+    <section class="products-section" id="produtos">
+        <div class="container">
+            <div class="section-header">
+                <h2>Nossos Produtos</h2>
+                <p>Utensílios e organizadores selecionados para o seu lar</p>
+            </div>
+
+            <!-- Filters Toolbar -->
+            <div class="catalog-toolbar">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="product-search" placeholder="Buscar produto...">
+                </div>
+                <div class="filter-categories" id="filter-categories">
+                    <!-- Dynamically populated by app.js -->
+                </div>
+                <div class="sort-box">
+                    <label for="product-sort">Ordenar por:</label>
+                    <select id="product-sort">
+                        <option value="default">Destaques</option>
+                        <option value="price-asc">Menor Preço</option>
+                        <option value="price-desc">Maior Preço</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dynamic Product Grid -->
+            <div class="products-grid" id="products-grid">
+                <div class="loading-products">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Carregando catálogo de produtos...
+                </div>
+            </div>
+
+            <!-- Catalog Pagination (Added for multi-page support) -->
+            <div class="catalog-pagination" id="catalog-pagination">
+                <!-- Dynamically populated by app.js -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials / Depoimentos -->
+    <section class="testimonials-section" id="depoimentos">
+        <div class="container">
+            <div class="section-header">
+                <h2>O que dizem nossos clientes</h2>
+                <p>A satisfação de quem já transformou sua rotina doméstica com os produtos RaviLar</p>
+            </div>
+            <div class="circular-testimonials-container">
+                <div class="circular-testimonials-grid">
+                    
+                    <!-- Images Area -->
+                    <div class="testimonials-images-wrapper" id="ct-images-container">
+                        <!-- Populated dynamically by app.js -->
+                    </div>
+                    
+                    <!-- Content Area -->
+                    <div class="testimonials-content-wrapper">
+                        <div>
+                            <h3 class="ct-name" id="ct-user-name">-</h3>
+                            
+                            <div class="stars" style="margin-bottom: 12px; color: var(--accent-color);">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                            </div>
+                            
+                            <p class="ct-quote" id="ct-user-quote">-</p>
+                            
+                            <!-- Associated Product & Navigation controls in same line -->
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; flex-wrap: wrap;">
+                                <div id="ct-product-link-container" style="margin: 0;">
+                                    <button class="btn btn-secondary btn-sm" id="ct-product-link-btn" style="padding: 8px 16px; font-size: 0.82rem; border-color: var(--primary-color); color: var(--primary-color); margin: 0; display: flex; align-items: center; gap: 6px;">
+                                        Ver Produto <i class="fa-solid fa-up-right-from-square" style="font-size: 0.75rem;"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="ct-navigation" style="margin: 0; gap: 8px;">
+                                    <button class="ct-nav-btn" id="ct-prev-btn" aria-label="Depoimento anterior" style="width: 36px; height: 36px; font-size: 0.85rem;">
+                                        <i class="fa-solid fa-arrow-left"></i>
+                                    </button>
+                                    <button class="ct-nav-btn" id="ct-next-btn" aria-label="Próximo depoimento" style="width: 36px; height: 36px; font-size: 0.85rem;">
+                                        <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact & Store Info Section -->
+    <section class="contact-section" id="contato">
+        <div class="container contact-container">
+            <div class="contact-info-block">
+                <h2>Fale Conosco</h2>
+                <p>Tem alguma dúvida sobre um produto ou quer fazer uma compra corporativa? Entre em contato por um de nossos canais. Estamos prontos para te atender!</p>
+                
+                <div class="contact-details">
+                    <div class="contact-item">
+                        <i class="fa-solid fa-phone contact-icon"></i>
+                        <div>
+                            <h4>WhatsApp</h4>
+                            <p><a href="https://wa.me/5517996371743" target="_blank" class="contact-link">(17) 99637-1743</a></p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fa-solid fa-envelope contact-icon"></i>
+                        <div>
+                            <h4>E-mail</h4>
+                            <p><a href="mailto:ravilarutilidades@gmail.com" class="contact-link">ravilarutilidades@gmail.com</a></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="social-links">
+                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#" aria-label="Pinterest"><i class="fa-brands fa-pinterest-p"></i></a>
+                </div>
+            </div>
+
+            <!-- Simple Interactive Form -->
+            <div class="contact-form-block">
+                <h3>Envie uma Mensagem</h3>
+                <form id="contact-form">
+                    <div class="form-group">
+                        <label for="contact-name">Seu Nome</label>
+                        <input type="text" id="contact-name" required placeholder="Digite seu nome completo">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-email">Seu E-mail</label>
+                        <input type="email" id="contact-email" required placeholder="Digite seu e-mail">
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-message">Sua Mensagem</label>
+                        <textarea id="contact-message" required rows="4" placeholder="Como podemos ajudar você?"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Enviar Mensagem <i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+                <div id="form-success-msg" class="form-success-msg hide">
+                    <i class="fa-solid fa-circle-check"></i> Mensagem enviada com sucesso! Responderemos em breve.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <div class="logo logo-footer">
+                    <!-- Text logo "RaviLar Utilidades" in footer (No Icon) -->
+                    <span class="brand-name"><span class="white">Ravi</span><span class="gold">Lar</span> <span class="gold font-medium">Utilidades</span></span>
+                </div>
+                <p>Praticidade e elegância para o seu lar. Uma seleção dos melhores utensílios domésticos e organizadores para tornar sua rotina prática e sofisticada.</p>
+                
+                <!-- Admin Panel Link -->
+                <a href="admin.html" class="admin-link">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> Área Administrativa
+                </a>
+            </div>
+            
+            <div class="footer-links">
+                <h4>Links Úteis</h4>
+                <ul>
+                    <li><a href="#inicio">Início</a></li>
+                    <li><a href="#produtos">Produtos</a></li>
+                    <li><a href="#categorias">Categorias</a></li>
+                    <li><a href="#depoimentos">Depoimentos</a></li>
+                    <li><a href="#contato">Contato</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-contact">
+                <h4>Atendimento</h4>
+                <p><i class="fa-solid fa-clock"></i> Seg. a Sex. das 9h às 18h<br>Sábados das 9h às 13h</p>
+                <p><i class="fa-brands fa-whatsapp text-gold"></i> <a href="https://wa.me/5517996371743" target="_blank">(17) 99637-1743</a></p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <div class="container footer-bottom-container">
+                <p>&copy; 2026 RaviLar Utilidades. Todos os direitos reservados.</p>
+                <div class="payment-badges">
+                    <i class="fa-brands fa-pix" title="Pix"></i>
+                    <i class="fa-solid fa-credit-card" title="Cartão de Crédito"></i>
+                    <i class="fa-solid fa-barcode" title="Boleto"></i>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- CART SIDEBAR (DRAWER) -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-drawer-header">
+            <h3>Seu Carrinho</h3>
+            <button class="cart-drawer-close" id="cart-drawer-close" aria-label="Fechar carrinho">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        
+        <!-- Cart Items List -->
+        <div class="cart-items-container" id="cart-items-container">
+            <!-- Will be dynamically populated by JS -->
+            <div class="empty-cart-message">
+                <i class="fa-solid fa-basket-shopping"></i>
+                <p>Seu carrinho está vazio.</p>
+                <a href="#produtos" class="btn btn-secondary btn-sm" id="cart-continue-shopping">Ver Produtos</a>
+            </div>
+        </div>
+        
+        <!-- Cart Footer -->
+        <div class="cart-drawer-footer" id="cart-drawer-footer">
+            <div class="cart-totals">
+                <span>Subtotal:</span>
+                <span class="cart-subtotal-val" id="cart-subtotal">R$ 0,00</span>
+            </div>
+            <p class="shipping-info"><i class="fa-solid fa-truck"></i> Frete a combinar no fechamento.</p>
+            <button class="btn btn-primary btn-block btn-checkout" id="checkout-trigger-btn" disabled>
+                Finalizar Compra <i class="fa-solid fa-whatsapp"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- PRODUCT DETAILS MODAL (Updated for Multiple Media Gallery support) -->
+    <div class="modal-overlay" id="product-modal">
+        <div class="modal-container">
+            <button class="modal-close" id="product-modal-close" aria-label="Fechar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-product-layout">
+                <!-- Gallery with support for multiple images & videos -->
+                <div class="modal-product-image">
+                    <div class="product-gallery-wrapper">
+                        <div class="gallery-main" id="gallery-main-container">
+                            <img id="modal-product-img" src="" alt="Produto">
+                        </div>
+                        <div class="gallery-thumbs" id="gallery-thumbs-container">
+                            <!-- Populated dynamically by app.js -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-product-info">
+                    <span class="modal-product-category" id="modal-product-cat">Categoria</span>
+                    <h2 id="modal-product-name">Nome do Produto</h2>
+                    <div class="modal-product-stars">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                        <span>(15 avaliações)</span>
+                    </div>
+                    <div class="modal-product-price" id="modal-product-price">R$ 0,00</div>
+                    <p class="modal-product-desc" id="modal-product-desc">Descrição completa do produto.</p>
+                    
+                    <div class="modal-purchase-controls">
+                        <div class="quantity-selector">
+                            <button class="qty-btn" id="qty-minus" aria-label="Diminuir quantidade"><i class="fa-solid fa-minus"></i></button>
+                            <span class="qty-val" id="qty-val">1</span>
+                            <button class="qty-btn" id="qty-plus" aria-label="Aumentar quantidade"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <button class="btn btn-primary" id="modal-add-to-cart-btn">
+                            Adicionar ao Carrinho <i class="fa-solid fa-bag-shopping"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKOUT DETAILS FORM MODAL -->
+    <div class="modal-overlay" id="checkout-modal">
+        <div class="modal-container modal-sm">
+            <button class="modal-close" id="checkout-modal-close" aria-label="Fechar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="checkout-modal-header">
+                <h3>Dados de Entrega</h3>
+                <p>Preencha os dados abaixo para gerarmos seu pedido no WhatsApp.</p>
+            </div>
+            <form id="checkout-form">
+                <div class="form-group">
+                    <label for="checkout-name">Nome Completo</label>
+                    <input type="text" id="checkout-name" required placeholder="Ex: João da Silva">
+                </div>
+                <div class="form-group">
+                    <label for="checkout-phone">WhatsApp para contato</label>
+                    <input type="tel" id="checkout-phone" required placeholder="Ex: (11) 99999-9999">
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-8">
+                        <label for="checkout-street">Rua / Avenida</label>
+                        <input type="text" id="checkout-street" required placeholder="Ex: Rua das Flores">
+                    </div>
+                    <div class="form-group col-4">
+                        <label for="checkout-number">Nº</label>
+                        <input type="text" id="checkout-number" required placeholder="123">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-6">
+                        <label for="checkout-neighborhood">Bairro</label>
+                        <input type="text" id="checkout-neighborhood" required placeholder="Ex: Centro">
+                    </div>
+                    <div class="form-group col-6">
+                        <label for="checkout-city">Cidade / UF</label>
+                        <input type="text" id="checkout-city" required placeholder="Ex: São Paulo - SP">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="checkout-payment">Forma de Pagamento</label>
+                    <select id="checkout-payment" required>
+                        <option value="" disabled selected>Escolha uma opção</option>
+                        <option value="Pix">Pix (Chave Pix enviada no chat)</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                        <option value="Cartão de Débito">Cartão de Débito</option>
+                        <option value="Dinheiro">Dinheiro na entrega</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="whatsapp-submit-btn">
+                    Enviar Pedido pelo WhatsApp <i class="fa-brands fa-whatsapp"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="app.js"></script>
+</body>
+</html>
