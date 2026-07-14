@@ -41,6 +41,17 @@ let editBannerId = null;
 let isReviewEditMode = false;
 let editReviewId = null;
 
+// Customers State
+let adminCustomers = [];
+let customerSearchQuery = "";
+let adminCustomerCurrentPage = 1;
+const ADMIN_CUSTOMERS_PER_PAGE = 10;
+
+// DOM Elements - Customers
+const customerTableBody = document.getElementById("admin-customers-tbody");
+const customerSearchInput = document.getElementById("admin-customers-search");
+const customerPagination = document.getElementById("admin-customers-pagination");
+
 let searchQuery = "";
 let uploadedMediaUrls = []; // Holds arrays of uploaded URLs for active product form
 
@@ -63,6 +74,16 @@ const tablePagination = document.getElementById("admin-table-pagination");
 // DOM Elements - Tabs Navigation
 const tabButtons = document.querySelectorAll(".admin-tab-btn");
 const tabContents = document.querySelectorAll(".admin-tab-content");
+
+// DOM Elements - Authentication
+const loginForm = document.getElementById("admin-login-form");
+const loginOverlay = document.getElementById("admin-login-overlay");
+const loginError = document.getElementById("login-error");
+const loginErrorText = document.getElementById("login-error-text");
+const passwordToggle = document.getElementById("password-toggle");
+const loginPasswordInput = document.getElementById("login-password");
+const headerActions = document.getElementById("admin-header-actions");
+const logoutBtn = document.getElementById("admin-logout-btn");
 
 // Stats Elements
 const statTotal = document.getElementById("stat-total-products");
@@ -151,10 +172,21 @@ async function init() {
 
     bindEvents();
     bindTabEvents();
+    
+    // Check if the user is authenticated
+    const hasSession = await checkAuth();
+    if (hasSession) {
+        await loadAllDashboardData();
+    }
+}
+
+async function loadAllDashboardData() {
     await loadCategories();
     await loadBanners();
     await loadProducts();
     await loadReviews();
+    await loadCustomers();
+    initFlyerGenerator();
 }
 
 // Bind Tab navigation click events
@@ -171,6 +203,14 @@ function bindTabEvents() {
             tabContents.forEach(content => {
                 if (content.id === `tab-${targetTab}`) {
                     content.classList.add("active");
+                    // Reload customer data when tab switches to clientes
+                    if (targetTab === "clientes") {
+                        loadCustomers();
+                    }
+                    // Refresh checklist when switching to flyer generator
+                    if (targetTab === "panfleto") {
+                        renderFlyerProductChecklist();
+                    }
                 } else {
                     content.classList.remove("active");
                 }
@@ -466,7 +506,8 @@ function resetReviewFormMode() {
 
 // Delete category handler
 async function deleteCategory(id, name) {
-    if (!confirm(`Deseja realmente excluir a categoria "${name}"? Os produtos associados continuarão existindo no banco de dados.`)) {
+    const ok = await showConfirm(`Deseja realmente excluir a categoria "${name}"? Os produtos associados continuarão existindo no banco de dados.`);
+    if (!ok) {
         return;
     }
 
@@ -492,7 +533,8 @@ async function deleteCategory(id, name) {
 
 // Delete banner handler
 async function deleteBanner(id, title) {
-    if (!confirm(`Deseja realmente excluir o banner "${title}"?`)) {
+    const ok = await showConfirm(`Deseja realmente excluir o banner "${title}"?`);
+    if (!ok) {
         return;
     }
 
@@ -518,7 +560,8 @@ async function deleteBanner(id, title) {
 
 // Delete review handler
 async function deleteReview(id, name) {
-    if (!confirm(`Deseja realmente excluir a avaliação de "${name}"?`)) {
+    const ok = await showConfirm(`Deseja realmente excluir a avaliação de "${name}"?`);
+    if (!ok) {
         return;
     }
 
@@ -716,6 +759,15 @@ function bindEvents() {
         renderTable();
     });
 
+    // Real-time customers table filter
+    if (customerSearchInput) {
+        customerSearchInput.addEventListener("input", (e) => {
+            customerSearchQuery = e.target.value.toLowerCase().trim();
+            adminCustomerCurrentPage = 1;
+            renderCustomersTable();
+        });
+    }
+
     // PRODUCT MEDIA DRAG AND DROP
     mediaDropZone.addEventListener("click", () => mediaFileInput.click());
     
@@ -807,6 +859,31 @@ function bindEvents() {
     // REVIEW SUBMIT & CANCEL EVENTS
     reviewForm.addEventListener("submit", submitReviewForm);
     reviewCancelBtn.addEventListener("click", resetReviewFormMode);
+
+    // AUTHENTICATION EVENTS
+    if (loginForm) {
+        loginForm.addEventListener("submit", handleLogin);
+    }
+    
+    if (passwordToggle && loginPasswordInput) {
+        passwordToggle.addEventListener("click", () => {
+            const type = loginPasswordInput.getAttribute("type") === "password" ? "text" : "password";
+            loginPasswordInput.setAttribute("type", type);
+            
+            const icon = passwordToggle.querySelector("i");
+            if (icon) {
+                if (type === "password") {
+                    icon.className = "fa-solid fa-eye";
+                } else {
+                    icon.className = "fa-solid fa-eye-slash";
+                }
+            }
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", handleLogout);
+    }
 }
 
 // Handle file uploads one-by-one to Supabase Storage for product
@@ -1253,7 +1330,8 @@ async function deleteProduct(productId) {
     const product = adminProducts.find(p => p.id === productId);
     if (!product) return;
 
-    if (!confirm(`Deseja realmente excluir o produto "${product.name}"?`)) {
+    const ok = await showConfirm(`Deseja realmente excluir o produto "${product.name}"?`);
+    if (!ok) {
         return;
     }
 
@@ -1295,4 +1373,722 @@ function showToast(message, type = "success") {
     }, 3500);
 }
 
+// Helper to show custom confirmation modal
+function showConfirm(message) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById("custom-confirm-modal");
+        const msgEl = document.getElementById("custom-confirm-message");
+        const btnOk = document.getElementById("btn-confirm-ok");
+        const btnCancel = document.getElementById("btn-confirm-cancel");
+        
+        if (!modal || !msgEl || !btnOk || !btnCancel) {
+            // Fallback to browser confirm if elements don't exist
+            resolve(confirm(message));
+            return;
+        }
+        
+        msgEl.textContent = message;
+        modal.style.display = "flex";
+        
+        // Use once listener pattern to ensure no multiple triggers
+        const onOk = () => {
+            modal.style.display = "none";
+            btnOk.removeEventListener("click", onOk);
+            btnCancel.removeEventListener("click", onCancel);
+            resolve(true);
+        };
+        
+        const onCancel = () => {
+            modal.style.display = "none";
+            btnOk.removeEventListener("click", onOk);
+            btnCancel.removeEventListener("click", onCancel);
+            resolve(false);
+        };
+        
+        btnOk.addEventListener("click", onOk);
+        btnCancel.addEventListener("click", onCancel);
+    });
+}
+
+// Fetch customers from database
+async function loadCustomers() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from("customers")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) {
+            // Handle scenario where customer table has not been created by user in dashboard
+            if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+                console.warn("Tabela 'customers' não existe no Supabase.");
+                customerTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--error-color);">
+                            A tabela de clientes não existe no seu Supabase. <br>
+                            Por favor, execute o script SQL atualizado (setup_database.sql) no Editor SQL do seu painel Supabase.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            throw error;
+        }
+
+        adminCustomers = data || [];
+        renderCustomersTable();
+    } catch (err) {
+        showToast("Erro ao carregar clientes: " + err.message, "error");
+        customerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error-color); padding: 30px;">Erro ao carregar clientes do banco de dados.</td></tr>`;
+    }
+}
+
+// Render customers list with pagination and filter
+function renderCustomersTable() {
+    if (!customerTableBody) return;
+    customerTableBody.innerHTML = "";
+
+    const filtered = adminCustomers.filter(c => 
+        (c.name && c.name.toLowerCase().includes(customerSearchQuery)) ||
+        (c.phone && c.phone.toLowerCase().includes(customerSearchQuery)) ||
+        (c.street && c.street.toLowerCase().includes(customerSearchQuery)) ||
+        (c.neighborhood && c.neighborhood.toLowerCase().includes(customerSearchQuery)) ||
+        (c.city && c.city.toLowerCase().includes(customerSearchQuery))
+    );
+
+    if (filtered.length === 0) {
+        customerTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhum cliente cadastrado ou encontrado.</td></tr>`;
+        if (customerPagination) customerPagination.innerHTML = "";
+        return;
+    }
+
+    const totalItems = filtered.length;
+    const totalPages = Math.ceil(totalItems / ADMIN_CUSTOMERS_PER_PAGE) || 1;
+
+    if (adminCustomerCurrentPage > totalPages) {
+        adminCustomerCurrentPage = totalPages;
+    }
+
+    const startIndex = (adminCustomerCurrentPage - 1) * ADMIN_CUSTOMERS_PER_PAGE;
+    const endIndex = startIndex + ADMIN_CUSTOMERS_PER_PAGE;
+    const pageCustomers = filtered.slice(startIndex, endIndex);
+
+    pageCustomers.forEach(c => {
+        const dateObj = new Date(c.created_at);
+        const formattedDate = dateObj.toLocaleDateString('pt-BR') + ' ' + dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        
+        const address = `${c.street}, Nº ${c.number} - ${c.neighborhood}, ${c.city}`;
+        
+        let formattedPhone = c.phone;
+        if (c.phone && c.phone.length === 11) {
+            formattedPhone = `(${c.phone.slice(0,2)}) ${c.phone.slice(2,7)}-${c.phone.slice(7)}`;
+        } else if (c.phone && c.phone.length === 10) {
+            formattedPhone = `(${c.phone.slice(0,2)}) ${c.phone.slice(2,6)}-${c.phone.slice(6)}`;
+        }
+
+        const trHTML = `
+            <tr data-id="${c.id}">
+                <td style="font-weight: 600; color: var(--primary-color);">${formattedPhone}</td>
+                <td style="font-weight: 600;">${c.name}</td>
+                <td>${address}</td>
+                <td>${formattedDate}</td>
+                <td>
+                    <div class="admin-actions">
+                        <button class="btn-action btn-action-delete-customer" style="background:none; border:none; color:var(--error-color); cursor:pointer; font-size:1.1rem; padding: 4px;" title="Excluir Cliente" data-id="${c.id}"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        customerTableBody.insertAdjacentHTML("beforeend", trHTML);
+    });
+
+    renderCustomersPagination(totalPages);
+    bindCustomersActionEvents();
+}
+
+// Generate pagination controls for customers
+function renderCustomersPagination(totalPages) {
+    if (!customerPagination) return;
+    customerPagination.innerHTML = "";
+
+    if (totalPages <= 1) return;
+
+    let paginationHTML = "";
+
+    paginationHTML += `
+        <button class="page-btn" ${adminCustomerCurrentPage === 1 ? 'disabled' : ''} id="admin-customers-prev-page">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+    `;
+
+    for (let i = 1; i <= totalPages; i++) {
+        paginationHTML += `
+            <button class="page-btn ${adminCustomerCurrentPage === i ? 'active' : ''}" data-page="${i}">
+                ${i}
+            </button>
+        `;
+    }
+
+    paginationHTML += `
+        <button class="page-btn" ${adminCustomerCurrentPage === totalPages ? 'disabled' : ''} id="admin-customers-next-page">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    `;
+
+    customerPagination.innerHTML = paginationHTML;
+
+    const prevBtn = document.getElementById("admin-customers-prev-page");
+    const nextBtn = document.getElementById("admin-customers-next-page");
+    const numBtns = customerPagination.querySelectorAll("button[data-page]");
+
+    if (prevBtn) {
+        prevBtn.addEventListener("click", () => {
+            if (adminCustomerCurrentPage > 1) {
+                adminCustomerCurrentPage--;
+                renderCustomersTable();
+            }
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener("click", () => {
+            if (adminCustomerCurrentPage < totalPages) {
+                adminCustomerCurrentPage++;
+                renderCustomersTable();
+            }
+        });
+    }
+
+    numBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            adminCustomerCurrentPage = parseInt(btn.getAttribute("data-page"));
+            renderCustomersTable();
+        });
+    });
+}
+
+// Bind click event for customer row deletion
+function bindCustomersActionEvents() {
+    const deleteBtns = customerTableBody.querySelectorAll(".btn-action-delete-customer");
+    deleteBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-id");
+            deleteCustomer(id);
+        });
+    });
+}
+
+// Delete customer registration from database
+async function deleteCustomer(id) {
+    const ok = await showConfirm("Tem certeza que deseja excluir o cadastro deste cliente?");
+    if (!ok) return;
+    if (!supabaseClient) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from("customers")
+            .delete()
+            .eq("id", id);
+
+        if (error) throw error;
+
+        showToast("Cadastro de cliente excluído com sucesso!", "success");
+        await loadCustomers();
+    } catch (err) {
+        showToast("Erro ao excluir cliente: " + err.message, "error");
+    }
+}
+
+// Check active auth session in Supabase
+async function checkAuth() {
+    if (!supabaseClient) {
+        showLoginHideDashboard();
+        return false;
+    }
+
+    try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+
+        if (session) {
+            hideLoginShowDashboard();
+            return true;
+        } else {
+            showLoginHideDashboard();
+            return false;
+        }
+    } catch (err) {
+        console.error("Erro na verificação de sessão:", err.message);
+        showLoginHideDashboard();
+        return false;
+    }
+}
+
+// Show login screen, hide stats and table
+function showLoginHideDashboard() {
+    if (loginOverlay) loginOverlay.style.display = "flex";
+    const mainContent = document.querySelector("main.container");
+    if (mainContent) mainContent.style.display = "none";
+    if (headerActions) headerActions.style.display = "none";
+}
+
+// Hide login screen, show stats and table
+function hideLoginShowDashboard() {
+    if (loginOverlay) loginOverlay.style.display = "none";
+    const mainContent = document.querySelector("main.container");
+    if (mainContent) mainContent.style.display = "block";
+    if (headerActions) headerActions.style.display = "flex";
+}
+
+// Handle login form submission
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById("login-email").value.trim();
+    const password = loginPasswordInput.value;
+    const submitBtn = document.getElementById("login-submit-btn");
+    
+    if (loginError) loginError.style.display = "none";
+    
+    if (!supabaseClient) {
+        showLoginError("Supabase não configurado.");
+        return;
+    }
+    
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Entrando... <i class="fa-solid fa-spinner fa-spin"></i>';
+        
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) throw error;
+        
+        hideLoginShowDashboard();
+        await loadAllDashboardData();
+        showToast("Login realizado com sucesso!", "success");
+        
+    } catch (err) {
+        console.error("Erro no login:", err.message);
+        let errorMsg = "E-mail ou senha incorretos.";
+        if (err.message.includes("Invalid login credentials")) {
+            errorMsg = "E-mail ou senha incorretos.";
+        } else if (err.message.includes("Connection")) {
+            errorMsg = "Erro de conexão com o banco de dados.";
+        } else {
+            errorMsg = err.message;
+        }
+        showLoginError(errorMsg);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Entrar no Painel <i class="fa-solid fa-right-to-bracket"></i>';
+    }
+}
+
+// Display error alert under logo
+function showLoginError(msg) {
+    if (loginError && loginErrorText) {
+        loginErrorText.textContent = msg;
+        loginError.style.display = "flex";
+    }
+}
+
+// Handle admin logout click
+async function handleLogout() {
+    const ok = await showConfirm("Tem certeza que deseja sair do painel administrativo?");
+    if (!ok) return;
+    if (!supabaseClient) return;
+    
+    try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
+        
+        showToast("Sessão encerrada.", "info");
+        // Reload to clear state and show login screen
+        window.location.reload();
+    } catch (err) {
+        showToast("Erro ao deslogar: " + err.message, "error");
+    }
+}
+
+// Start Admin panel load
 window.addEventListener("DOMContentLoaded", init);
+
+// ==========================================================================
+// FLYER GENERATOR FEATURES
+// ==========================================================================
+let selectedFlyerProducts = [];
+let flyerSearchQuery = "";
+let flyerCategoryFilter = "all";
+
+function getContrastColor(hexColor) {
+    if (!hexColor || hexColor.charAt(0) !== '#') return '#1e293b';
+    const hex = hexColor.substring(1);
+    if (hex.length !== 6) return '#1e293b';
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 128) ? '#1e293b' : '#ffffff';
+}
+
+function initFlyerGenerator() {
+    // 1. Populate category dropdown
+    const catSelect = document.getElementById("flyer-category-filter");
+    if (catSelect) {
+        catSelect.innerHTML = '<option value="all">Todas as Categorias</option>';
+        adminCategories.forEach(cat => {
+            const opt = document.createElement("option");
+            opt.value = cat.slug;
+            opt.textContent = cat.name;
+            catSelect.appendChild(opt);
+        });
+    }
+
+    // 2. Bind search & filter events
+    const searchInput = document.getElementById("flyer-search");
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            flyerSearchQuery = e.target.value.toLowerCase().trim();
+            renderFlyerProductChecklist();
+        });
+    }
+
+    if (catSelect) {
+        catSelect.addEventListener("change", (e) => {
+            flyerCategoryFilter = e.target.value;
+            renderFlyerProductChecklist();
+        });
+    }
+
+    // 3. Bind form inputs for real-time live preview
+    const titleInput = document.getElementById("flyer-title");
+    const subtitleInput = document.getElementById("flyer-subtitle");
+    const validityInput = document.getElementById("flyer-validity");
+    const bgColorInput = document.getElementById("flyer-bg-color");
+    const colsSelect = document.getElementById("flyer-columns");
+    const alignSelect = document.getElementById("flyer-align");
+ 
+    const updatePreviewInputs = () => {
+        document.getElementById("flyer-title-preview").textContent = titleInput.value || "RaviLar Utilidades";
+        document.getElementById("flyer-subtitle-preview").textContent = subtitleInput.value || "Ofertas Incríveis";
+        document.getElementById("flyer-validity-preview").textContent = validityInput.value || "";
+        
+        const bgColor = bgColorInput.value || "#ffffff";
+        const headerPreview = document.getElementById("flyer-header-preview");
+        headerPreview.style.backgroundColor = bgColor;
+        
+        // Calculate contrast color for text
+        const textColor = getContrastColor(bgColor);
+        headerPreview.style.color = textColor;
+        document.getElementById("flyer-title-preview").style.color = textColor;
+        document.getElementById("flyer-subtitle-preview").style.color = textColor;
+        
+        // Apply alignment class to the header preview
+        const alignVal = alignSelect ? alignSelect.value : "left";
+        headerPreview.classList.remove("align-left", "align-center", "align-right");
+        headerPreview.classList.add(`align-${alignVal}`);
+        
+        const grid = document.getElementById("flyer-products-grid");
+        grid.className = `flyer-grid col-${colsSelect.value}`;
+    };
+ 
+    [titleInput, subtitleInput, validityInput, bgColorInput, colsSelect, alignSelect].forEach(input => {
+        if (input) {
+            input.addEventListener("input", updatePreviewInputs);
+            input.addEventListener("change", updatePreviewInputs);
+        }
+    });
+
+    // 4. Bind print button
+    const printBtn = document.getElementById("btn-print-flyer");
+    if (printBtn) {
+        printBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            if (selectedFlyerProducts.length === 0) {
+                showToast("Por favor, selecione pelo menos 1 produto para imprimir o panfleto.", "error");
+                return;
+            }
+            window.print();
+        });
+    }
+
+    // Bind Clear Selection button
+    const clearSelectionBtn = document.getElementById("btn-clear-flyer-selection");
+    if (clearSelectionBtn) {
+        clearSelectionBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (selectedFlyerProducts.length === 0) return;
+            const ok = await showConfirm("Deseja desmarcar todos os produtos selecionados?");
+            if (!ok) return;
+            
+            selectedFlyerProducts = [];
+            document.getElementById("flyer-selected-count").textContent = "0 produtos selecionados";
+            renderFlyerProductChecklist();
+            updatePreviewInputs();
+            renderFlyerPreview();
+            showToast("Seleção de produtos limpa.", "info");
+        });
+    }
+
+    // 6. Bind Template Save / List / Delete events
+    const quickSaveBtn = document.getElementById("btn-save-flyer-quick");
+
+    const renderSavedFlyersList = () => {
+        const listDiv = document.getElementById("saved-flyers-list");
+        if (!listDiv) return;
+        
+        let saved = [];
+        try {
+            saved = JSON.parse(localStorage.getItem("ravilar_flyer_templates") || "[]");
+        } catch (e) {
+            saved = [];
+        }
+        
+        if (saved.length === 0) {
+            listDiv.innerHTML = `
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 12px 0;">
+                    Nenhum panfleto salvo ainda.
+                </div>
+            `;
+            return;
+        }
+        
+        listDiv.innerHTML = "";
+        saved.forEach(tpl => {
+            const row = document.createElement("div");
+            row.className = "saved-flyer-item";
+            
+            const label = document.createElement("span");
+            label.textContent = tpl.name;
+            label.title = tpl.name;
+            
+            const actions = document.createElement("div");
+            actions.className = "saved-flyer-actions";
+            
+            const btnLoad = document.createElement("button");
+            btnLoad.className = "btn-load";
+            btnLoad.title = "Carregar / Editar";
+            btnLoad.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            btnLoad.addEventListener("click", (evt) => {
+                evt.preventDefault();
+                // Load values back to inputs
+                titleInput.value = tpl.title || "";
+                subtitleInput.value = tpl.subtitle || "";
+                validityInput.value = tpl.validity || "";
+                bgColorInput.value = tpl.bgColor || "#ffffff";
+                colsSelect.value = tpl.columns || "3";
+                if (alignSelect) {
+                    alignSelect.value = tpl.align || "left";
+                }
+
+                // Restore selection
+                selectedFlyerProducts = [...(tpl.selectedProducts || [])];
+                
+                // Refresh counts, checklist and preview
+                document.getElementById("flyer-selected-count").textContent = `${selectedFlyerProducts.length} produtos selecionados`;
+                renderFlyerProductChecklist();
+                updatePreviewInputs();
+                renderFlyerPreview();
+                
+                showToast(`Panfleto "${tpl.name}" carregado para edição.`, "success");
+            });
+            
+            const btnDel = document.createElement("button");
+            btnDel.className = "btn-del";
+            btnDel.title = "Excluir";
+            btnDel.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+            btnDel.addEventListener("click", async (evt) => {
+                evt.preventDefault();
+                const ok = await showConfirm(`Tem certeza que deseja excluir o panfleto "${tpl.name}"?`);
+                if (!ok) return;
+                
+                let currentSaved = [];
+                try {
+                    currentSaved = JSON.parse(localStorage.getItem("ravilar_flyer_templates") || "[]");
+                } catch (err) {
+                    currentSaved = [];
+                }
+                currentSaved = currentSaved.filter(t => t.name !== tpl.name);
+                localStorage.setItem("ravilar_flyer_templates", JSON.stringify(currentSaved));
+                
+                showToast("Panfleto excluído.", "info");
+                renderSavedFlyersList();
+            });
+            
+            actions.appendChild(btnLoad);
+            actions.appendChild(btnDel);
+            row.appendChild(label);
+            row.appendChild(actions);
+            listDiv.appendChild(row);
+        });
+    };
+
+    if (quickSaveBtn) {
+        quickSaveBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            
+            const title = titleInput.value.trim() || "Panfleto RaviLar";
+            const dateStr = new Date().toLocaleDateString("pt-BR").replace(/\//g, "-");
+            const autoName = `${title} - ${dateStr}`;
+            
+            let saved = [];
+            try {
+                saved = JSON.parse(localStorage.getItem("ravilar_flyer_templates") || "[]");
+            } catch (err) {
+                saved = [];
+            }
+
+            const newTemplate = {
+                name: autoName,
+                title: titleInput.value,
+                subtitle: subtitleInput.value,
+                validity: validityInput.value,
+                bgColor: bgColorInput.value,
+                columns: colsSelect.value,
+                align: alignSelect ? alignSelect.value : "left",
+                selectedProducts: [...selectedFlyerProducts]
+            };
+
+            // Remove existing with same name if any
+            saved = saved.filter(tpl => tpl.name !== autoName);
+            saved.push(newTemplate);
+
+            localStorage.setItem("ravilar_flyer_templates", JSON.stringify(saved));
+            showToast(`Panfleto salvo: "${autoName}"`, "success");
+            
+            renderSavedFlyersList();
+        });
+    }
+
+    // Call it initially
+    renderSavedFlyersList();
+    updatePreviewInputs();
+
+    // 5. Initial render of checklist
+    renderFlyerProductChecklist();
+}
+
+function renderFlyerProductChecklist() {
+    const listContainer = document.getElementById("flyer-product-select-list");
+    if (!listContainer) return;
+
+    listContainer.innerHTML = "";
+
+    const filtered = adminProducts.filter(p => {
+        const matchesCat = (flyerCategoryFilter === "all" || p.category === flyerCategoryFilter);
+        const matchesSearch = p.name.toLowerCase().includes(flyerSearchQuery) || 
+                              p.description.toLowerCase().includes(flyerSearchQuery);
+        return matchesCat && matchesSearch;
+    });
+
+    if (filtered.length === 0) {
+        listContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0;">Nenhum produto encontrado.</div>`;
+        return;
+    }
+
+    filtered.forEach(p => {
+        const isSelected = selectedFlyerProducts.includes(p.id);
+        const itemDiv = document.createElement("div");
+        itemDiv.className = `flyer-select-item ${isSelected ? 'selected' : ''}`;
+        
+        const mediaUrls = getProductMedia(p.image);
+        const imgUrl = mediaUrls.length > 0 ? mediaUrls[0] : 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=400';
+
+        itemDiv.innerHTML = `
+            <img src="${imgUrl}" class="flyer-select-img" alt="${p.name}">
+            <div class="flyer-select-info">
+                <span class="flyer-select-name">${p.name}</span>
+                <span class="flyer-select-price">R$ ${p.price.toFixed(2).replace('.', ',')}</span>
+            </div>
+            <input type="checkbox" class="flyer-select-checkbox" ${isSelected ? 'checked' : ''}>
+        `;
+
+        // Handle selection click
+        const checkbox = itemDiv.querySelector(".flyer-select-checkbox");
+        const toggleSelection = (e) => {
+            // Avoid double toggle when clicking the checkbox directly
+            if (e.target !== checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+
+            if (checkbox.checked) {
+                if (!selectedFlyerProducts.includes(p.id)) {
+                    selectedFlyerProducts.push(p.id);
+                }
+                itemDiv.classList.add("selected");
+            } else {
+                selectedFlyerProducts = selectedFlyerProducts.filter(id => id !== p.id);
+                itemDiv.classList.remove("selected");
+            }
+
+            // Update selected count badge
+            document.getElementById("flyer-selected-count").textContent = `${selectedFlyerProducts.length} produtos selecionados`;
+            renderFlyerPreview();
+        };
+
+        itemDiv.addEventListener("click", toggleSelection);
+        listContainer.appendChild(itemDiv);
+    });
+}
+
+function renderFlyerPreview() {
+    const grid = document.getElementById("flyer-products-grid");
+    if (!grid) return;
+
+    grid.innerHTML = "";
+
+    // Dynamic compactness adjustment based on number of selected products
+    const sheet = document.getElementById("flyer-a4-sheet");
+    if (sheet) {
+        sheet.classList.remove("compact-medium", "compact-extra");
+        if (selectedFlyerProducts.length >= 10) {
+            sheet.classList.add("compact-extra");
+        } else if (selectedFlyerProducts.length >= 7) {
+            sheet.classList.add("compact-medium");
+        }
+    }
+
+    if (selectedFlyerProducts.length === 0) {
+        grid.innerHTML = `
+            <div class="flyer-empty-state">
+                <i class="fa-solid fa-file-image fa-3x" style="color: var(--text-muted); margin-bottom: 12px; display: block;"></i>
+                <p>Selecione produtos no painel ao lado para gerar o panfleto.</p>
+            </div>
+        `;
+        return;
+    }
+
+    selectedFlyerProducts.forEach(pid => {
+        const p = adminProducts.find(prod => prod.id === pid);
+        if (!p) return;
+
+        const card = document.createElement("div");
+        card.className = "flyer-card";
+
+        const mediaUrls = getProductMedia(p.image);
+        const imgUrl = mediaUrls.length > 0 ? mediaUrls[0] : '';
+
+        // Formating price in retail style: R$ XX,YY (XX in big digits, YY in superscript)
+        const priceParts = p.price.toFixed(2).split('.');
+        const integerPart = priceParts[0];
+        const centsPart = priceParts[1];
+
+        card.innerHTML = `
+            <div class="flyer-card-badge">Oferta</div>
+            <div class="flyer-card-img-wrapper">
+                <img src="${imgUrl}" class="flyer-card-img" alt="${p.name}">
+            </div>
+            <div class="flyer-card-title">${p.name}</div>
+            <div class="flyer-card-price-tag">
+                <span class="flyer-price-currency">R$</span>
+                <span class="flyer-price-integer">${integerPart}</span>
+                <span class="flyer-price-cents">,${centsPart}</span>
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
+}

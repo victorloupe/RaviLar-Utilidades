@@ -15,8 +15,15 @@ const FALLBACK_PRODUCTS = [
         id: 1,
         name: "Forma Para Moldar Hamburguer Recheado 3 em 1",
         category: "cozinha",
-        price: 11.99,
-        image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600",
+        price: 25.30,
+        image: [
+            "https://www.utimix.com/wp-content/uploads/2023/05/oferta-forma-para-moldar-hamburguer-recheado-3-em-1.jpg",
+            "https://www.utimix.com/wp-content/uploads/2023/05/oferta-forma-para-moldar-hamburguer-recheado-3-em-1-2.jpg",
+            "https://www.utimix.com/wp-content/uploads/2023/05/oferta-forma-para-moldar-hamburguer-recheado-3-em-1-3.jpg",
+            "https://www.utimix.com/wp-content/uploads/2023/05/oferta-forma-para-moldar-hamburguer-recheado-3-em-1-4.jpg",
+            "https://www.utimix.com/wp-content/uploads/2023/05/oferta-forma-para-moldar-hamburguer-recheado-3-em-1-5.jpg",
+            "https://www.utimix.com/wp-content/uploads/2023/05/oferta-forma-para-moldar-hamburguer-recheado-3-em-1-6.jpg"
+        ],
         description: "Prepare hambúrgueres perfeitos e recheados em casa com esta forma prática 3 em 1. Feita com material resistente e fácil de limpar, molda hambúrgueres de diferentes tamanhos com acabamento profissional.",
         badge: "Destaque",
         rating: 4.8,
@@ -783,6 +790,33 @@ function initHero3DCarousel() {
         };
     }
 
+    // Swipe support for mobile
+    let touchstartX = 0;
+    let touchendX = 0;
+
+    if (wrapper) {
+        wrapper.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        wrapper.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            const threshold = 50;
+            if (touchendX < touchstartX - threshold) {
+                if (slideInterval) clearInterval(slideInterval);
+                currentSlideIndex = (currentSlideIndex + 1) % bannerSlides.length;
+                updateHero3DCarousel();
+                startBannerSlider();
+            }
+            if (touchendX > touchstartX + threshold) {
+                if (slideInterval) clearInterval(slideInterval);
+                currentSlideIndex = (currentSlideIndex - 1 + bannerSlides.length) % bannerSlides.length;
+                updateHero3DCarousel();
+                startBannerSlider();
+            }
+        }, { passive: true });
+    }
+
     updateHero3DCarousel();
     startBannerSlider();
 }
@@ -882,7 +916,7 @@ function renderCategories() {
         const cardHTML = `
             <div class="category-card" data-category="${cat.slug}">
                 <div class="category-img-container">
-                    <img src="${cat.image}" alt="${cat.name}">
+                    <img src="${cat.image}" alt="${cat.name}" loading="lazy">
                 </div>
                 <div class="category-info">
                     <h3>${cat.name}</h3>
@@ -1079,6 +1113,13 @@ function bindEvents() {
     // Checkout Form Submit (WhatsApp redirect)
     checkoutForm.addEventListener("submit", submitCheckout);
 
+    // Auto-fill customer details from phone number on blur/change
+    const checkoutPhone = document.getElementById("checkout-phone");
+    if (checkoutPhone) {
+        checkoutPhone.addEventListener("blur", handlePhoneBlur);
+        checkoutPhone.addEventListener("input", formatPhoneInput);
+    }
+
     // Contact Form Submit
     if (contactForm) {
         contactForm.addEventListener("submit", submitContactForm);
@@ -1113,6 +1154,13 @@ function closeCheckoutModal() {
     checkoutModal.classList.remove("open");
     cartOverlay.classList.remove("open");
     document.body.style.overflow = "";
+    
+    // Clear phone search status message
+    const phoneStatus = document.getElementById("checkout-phone-status");
+    if (phoneStatus) {
+        phoneStatus.style.display = "none";
+        phoneStatus.textContent = "";
+    }
 }
 
 function updateCartUI() {
@@ -1131,9 +1179,12 @@ function updateCartUI() {
         
         // Append current cart items
         cart.forEach(item => {
+            const mediaList = getProductMedia(item.product.image);
+            const firstImg = mediaList[0] || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600';
+            
             const itemHTML = `
                 <div class="cart-item" data-id="${item.product.id}">
-                    <img src="${item.product.image}" alt="${item.product.name}" class="cart-item-img">
+                    <img src="${firstImg}" alt="${item.product.name}" class="cart-item-img">
                     <div class="cart-item-details">
                         <h4 class="cart-item-title">${item.product.name}</h4>
                         <div class="cart-item-price">R$ ${item.product.price.toFixed(2).replace('.', ',')}</div>
@@ -1313,7 +1364,7 @@ function renderProducts() {
             <div class="product-card" data-id="${p.id}">
                 ${badgeHTML}
                 <div class="product-img-wrapper">
-                    <img src="${firstMedia}" alt="${p.name}">
+                    <img src="${firstMedia}" alt="${p.name}" loading="lazy">
                     <div class="product-actions-overlay">
                         <button class="btn-icon btn-view-details" title="Visualizar Detalhes"><i class="fa-solid fa-eye"></i></button>
                         <button class="btn-icon btn-quick-add" title="Adicionar ao Carrinho"><i class="fa-solid fa-cart-plus"></i></button>
@@ -1589,14 +1640,17 @@ ${divider}
 
 Olá RaviLar, gostaria de confirmar o pedido acima!`;
 
-    // 3. Create WhatsApp URL and redirect
+    // 3. Save/update customer details in Supabase
+    saveCustomer(clientPhone, clientName, street, number, neighborhood, city);
+
+    // 4. Create WhatsApp URL and redirect
     const encodedText = encodeURIComponent(textMsg);
     const whatsappUrl = `https://api.whatsapp.com/send?phone=${SHOP_WHATSAPP_NUMBER}&text=${encodedText}`;
     
     // Open in a new tab/app window
     window.open(whatsappUrl, "_blank");
     
-    // 4. Reset Cart
+    // 5. Reset Cart
     cart = [];
     saveCart();
     updateCartUI();
@@ -1606,6 +1660,101 @@ Olá RaviLar, gostaria de confirmar o pedido acima!`;
     checkoutForm.reset();
     
     alert("Pedido enviado! Você será redirecionado para o WhatsApp da RaviLar para finalizar o pagamento e combinar a entrega.");
+}
+
+// Phone number formatting in real time (XX) XXXXX-XXXX
+function formatPhoneInput(e) {
+    let value = e.target.value.replace(/\D/g, "");
+    if (value.length > 11) value = value.slice(0, 11);
+    
+    if (value.length > 10) {
+        e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+    } else if (value.length > 6) {
+        e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
+    } else if (value.length > 2) {
+        e.target.value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+    } else if (value.length > 0) {
+        e.target.value = `(${value}`;
+    }
+}
+
+// Check database for existing customer on blur
+async function handlePhoneBlur(e) {
+    const phone = e.target.value.replace(/\D/g, "");
+    const phoneStatus = document.getElementById("checkout-phone-status");
+    if (phone.length < 10) {
+        if (phoneStatus) {
+            phoneStatus.style.display = "none";
+        }
+        return;
+    }
+    
+    if (!supabaseClient) return;
+    
+    try {
+        if (phoneStatus) {
+            phoneStatus.style.color = "var(--text-muted)";
+            phoneStatus.style.display = "block";
+            phoneStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando cadastro...';
+        }
+        
+        const { data, error } = await supabaseClient
+            .from("customers")
+            .select("*")
+            .eq("phone", phone)
+            .maybeSingle();
+            
+        if (error) {
+            console.error("Erro ao buscar dados do cliente:", error.message);
+            if (phoneStatus) phoneStatus.style.display = "none";
+            return;
+        }
+        
+        if (data) {
+            // Auto fill checkout fields
+            document.getElementById("checkout-name").value = data.name || "";
+            document.getElementById("checkout-street").value = data.street || "";
+            document.getElementById("checkout-number").value = data.number || "";
+            document.getElementById("checkout-neighborhood").value = data.neighborhood || "";
+            document.getElementById("checkout-city").value = data.city || "";
+            
+            if (phoneStatus) {
+                phoneStatus.style.color = "var(--success-color)";
+                phoneStatus.innerHTML = `<i class="fa-solid fa-circle-check"></i> Cadastro de <strong>${data.name.split(' ')[0]}</strong> encontrado e preenchido!`;
+            }
+        } else {
+            if (phoneStatus) {
+                phoneStatus.style.display = "none";
+            }
+        }
+    } catch (err) {
+        console.error("Erro na busca de cliente:", err);
+        if (phoneStatus) phoneStatus.style.display = "none";
+    }
+}
+
+// Save/Update customer details in Supabase
+async function saveCustomer(phone, name, street, number, neighborhood, city) {
+    if (!supabaseClient) return;
+    const cleanPhone = phone.replace(/\D/g, "");
+    try {
+        const { error } = await supabaseClient
+            .from("customers")
+            .upsert({
+                phone: cleanPhone,
+                name: name,
+                street: street,
+                number: number,
+                neighborhood: neighborhood,
+                city: city
+            }, { onConflict: 'phone' });
+            
+        if (error) {
+            console.error("Erro ao salvar cliente no banco:", error.message);
+        }
+    } catch (err) {
+        console.error("Erro na requisição de cadastro do cliente:", err);
+    }
 }
 
 // Start Application on Load

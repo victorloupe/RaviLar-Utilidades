@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>RaviLar Utilidades - Utensílios Domésticos e Organização</title>
     
     <!-- Favicon -->
@@ -152,7 +152,7 @@
             <div class="catalog-toolbar">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="product-search" placeholder="Buscar produto...">
+                    <input type="search" id="product-search" placeholder="Buscar produto...">
                 </div>
                 <div class="filter-categories" id="filter-categories">
                     <!-- Dynamically populated by app.js -->
@@ -241,16 +241,14 @@
                 
                 <div class="contact-details">
                     <div class="contact-item">
-                        <i class="fa-solid fa-phone contact-icon"></i>
                         <div>
-                            <h4>WhatsApp</h4>
+                            <h4><i class="fa-brands fa-whatsapp" style="margin-right: 6px; color: var(--accent-color); font-size: 1.15rem; vertical-align: middle;"></i> WhatsApp</h4>
                             <p><a href="https://wa.me/5517996371743" target="_blank" class="contact-link">(17) 99637-1743</a></p>
                         </div>
                     </div>
                     <div class="contact-item">
-                        <i class="fa-solid fa-envelope contact-icon"></i>
                         <div>
-                            <h4>E-mail</h4>
+                            <h4><i class="fa-solid fa-envelope" style="margin-right: 6px; color: var(--accent-color); font-size: 1.1rem; vertical-align: middle;"></i> E-mail</h4>
                             <p><a href="mailto:ravilarutilidades@gmail.com" class="contact-link">ravilarutilidades@gmail.com</a></p>
                         </div>
                     </div>
@@ -263,28 +261,6 @@
                 </div>
             </div>
 
-            <!-- Simple Interactive Form -->
-            <div class="contact-form-block">
-                <h3>Envie uma Mensagem</h3>
-                <form id="contact-form">
-                    <div class="form-group">
-                        <label for="contact-name">Seu Nome</label>
-                        <input type="text" id="contact-name" required placeholder="Digite seu nome completo">
-                    </div>
-                    <div class="form-group">
-                        <label for="contact-email">Seu E-mail</label>
-                        <input type="email" id="contact-email" required placeholder="Digite seu e-mail">
-                    </div>
-                    <div class="form-group">
-                        <label for="contact-message">Sua Mensagem</label>
-                        <textarea id="contact-message" required rows="4" placeholder="Como podemos ajudar você?"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Enviar Mensagem <i class="fa-solid fa-paper-plane"></i></button>
-                </form>
-                <div id="form-success-msg" class="form-success-msg hide">
-                    <i class="fa-solid fa-circle-check"></i> Mensagem enviada com sucesso! Responderemos em breve.
-                </div>
-            </div>
         </div>
     </section>
 
@@ -362,7 +338,7 @@
             </div>
             <p class="shipping-info"><i class="fa-solid fa-truck"></i> Frete a combinar no fechamento.</p>
             <button class="btn btn-primary btn-block btn-checkout" id="checkout-trigger-btn" disabled>
-                Finalizar Compra <i class="fa-solid fa-whatsapp"></i>
+                Enviar Compra <i class="fa-brands fa-whatsapp"></i>
             </button>
         </div>
     </div>
@@ -388,11 +364,13 @@
                 <div class="modal-product-info">
                     <span class="modal-product-category" id="modal-product-cat">Categoria</span>
                     <h2 id="modal-product-name">Nome do Produto</h2>
-                    <div class="modal-product-stars">
-                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                        <span>(15 avaliações)</span>
+                    <div class="modal-product-meta">
+                        <div class="modal-product-stars">
+                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                            <span>(15 avaliações)</span>
+                        </div>
+                        <div class="modal-product-price" id="modal-product-price">R$ 0,00</div>
                     </div>
-                    <div class="modal-product-price" id="modal-product-price">R$ 0,00</div>
                     <p class="modal-product-desc" id="modal-product-desc">Descrição completa do produto.</p>
                     
                     <div class="modal-purchase-controls">
@@ -402,7 +380,7 @@
                             <button class="qty-btn" id="qty-plus" aria-label="Aumentar quantidade"><i class="fa-solid fa-plus"></i></button>
                         </div>
                         <button class="btn btn-primary" id="modal-add-to-cart-btn">
-                            Adicionar ao Carrinho <i class="fa-solid fa-bag-shopping"></i>
+                            Adicionar ao Carrinho <i class="fa-solid fa-cart-plus"></i>
                         </button>
                     </div>
                 </div>
@@ -422,12 +400,13 @@
             </div>
             <form id="checkout-form">
                 <div class="form-group">
-                    <label for="checkout-name">Nome Completo</label>
-                    <input type="text" id="checkout-name" required placeholder="Ex: João da Silva">
-                </div>
-                <div class="form-group">
                     <label for="checkout-phone">WhatsApp para contato</label>
                     <input type="tel" id="checkout-phone" required placeholder="Ex: (11) 99999-9999">
+                    <span id="checkout-phone-status" style="font-size: 0.8rem; color: var(--success-color); display: none; margin-top: 4px; font-weight: 600;"></span>
+                </div>
+                <div class="form-group">
+                    <label for="checkout-name">Nome Completo</label>
+                    <input type="text" id="checkout-name" required placeholder="Ex: João da Silva">
                 </div>
                 <div class="form-row">
                     <div class="form-group col-8">

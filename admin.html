@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Painel Administrativo - RaviLar Utilidades</title>
     
     <!-- Favicon -->
@@ -24,6 +24,46 @@
 </head>
 <body class="admin-body">
 
+    <!-- Admin Login Overlay -->
+    <div class="admin-login-overlay" id="admin-login-overlay" style="display: none;">
+        <div class="login-card">
+            <img src="LogoSite.png" alt="RaviLar Utilidades" class="login-logo">
+            <h2>Acesso Restrito</h2>
+            <p>Faça login para gerenciar a plataforma RaviLar.</p>
+            
+            <div class="login-error-message" id="login-error">
+                <i class="fa-solid fa-circle-xmark"></i>
+                <span id="login-error-text">Usuário ou senha incorretos.</span>
+            </div>
+            
+            <form id="admin-login-form">
+                <div class="form-group" style="text-align: left; margin-bottom: 20px;">
+                    <label for="login-email" style="font-weight: 600; margin-bottom: 6px; display: block; font-size: 0.9rem;">E-mail de Acesso</label>
+                    <input type="email" id="login-email" required placeholder="Digite seu e-mail" style="width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 0.95rem;">
+                </div>
+                
+                <div class="form-group" style="text-align: left; margin-bottom: 30px;">
+                    <label for="login-password" style="font-weight: 600; margin-bottom: 6px; display: block; font-size: 0.9rem;">Senha</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="login-password" required placeholder="Digite sua senha" style="width: 100%; padding: 12px 42px 12px 14px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 0.95rem;">
+                        <button type="button" class="password-toggle-btn" id="password-toggle" aria-label="Mostrar senha">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block" id="login-submit-btn" style="padding: 14px; font-weight: 700; font-size: 1rem;">
+                    Entrar no Painel <i class="fa-solid fa-right-to-bracket"></i>
+                </button>
+            </form>
+            <div style="margin-top: 20px;">
+                <a href="index.html" style="font-size: 0.85rem; color: var(--text-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--text-muted)'">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar para a Loja
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Sticky Header -->
     <header class="main-header" id="header">
         <div class="container header-container">
@@ -32,17 +72,17 @@
                 <img src="LogoSite.png" alt="RaviLar Utilidades" class="logo-img">
             </a>
             
-            <div class="admin-header-actions">
+            <div class="admin-header-actions" id="admin-header-actions" style="display: none;">
                 <span class="badge admin-badge badge-category"><i class="fa-solid fa-lock"></i> MODO ADMIN</span>
-                <a href="index.html" class="btn btn-secondary btn-sm">
-                    <i class="fa-solid fa-arrow-left"></i> Voltar para a Loja
-                </a>
+                <button id="admin-logout-btn" class="btn btn-secondary btn-sm" style="background-color: var(--error-color); color: white; border: none; margin-left: 8px;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Sair
+                </button>
             </div>
         </div>
     </header>
 
     <!-- Main Container -->
-    <main class="container">
+    <main class="container" style="display: none;">
         <div class="admin-container">
             
             <!-- Dashboard Stats Grid -->
@@ -97,6 +137,12 @@
                 </button>
                 <button class="admin-tab-btn" data-tab="avaliacoes">
                     <i class="fa-solid fa-star"></i> Gerenciar Avaliações
+                </button>
+                <button class="admin-tab-btn" data-tab="clientes">
+                    <i class="fa-solid fa-users"></i> Gerenciar Clientes
+                </button>
+                <button class="admin-tab-btn" data-tab="panfleto">
+                    <i class="fa-solid fa-file-invoice"></i> Gerar Panfleto
                 </button>
             </div>
 
@@ -403,22 +449,217 @@
                         </div>
                     </section>
 
-                    <!-- Reviews List Block -->
+                    </section>
+                </div>
+            </div>
+
+            <!-- TAB 5: CUSTOMERS MANAGEMENT -->
+            <div class="admin-tab-content" id="tab-clientes">
+                <div class="admin-content-grid" style="grid-template-columns: 1fr;">
+                    
+                    <!-- Customers List Block -->
                     <section class="admin-card">
                         <div class="admin-card-header">
-                            <h2>Avaliações Cadastradas</h2>
-                        </div>
-                        <div class="admin-card-body" id="admin-reviews-list" style="display: flex; flex-direction: column; gap: 16px;">
-                            <div style="text-align:center; color:var(--text-muted); font-size:0.9rem; padding: 12px 0;">
-                                <i class="fa-solid fa-spinner fa-spin"></i> Carregando avaliações...
+                            <h2>Clientes Cadastrados</h2>
+                            <div class="search-box" style="flex: 0; min-width: 250px; max-width: 300px;">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="admin-customers-search" placeholder="Buscar por nome ou telefone...">
                             </div>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Telefone</th>
+                                        <th>Nome</th>
+                                        <th>Endereço</th>
+                                        <th>Data Cadastro</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-customers-tbody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                            <i class="fa-solid fa-spinner fa-spin fa-2x" style="margin-bottom: 12px; display: block; color: var(--accent-color);"></i>
+                                            Carregando clientes...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination for customers -->
+                        <div class="admin-pagination" id="admin-customers-pagination">
+                            <!-- Populated dynamically -->
                         </div>
                     </section>
                 </div>
             </div>
 
+            <!-- TAB 6: FLYER/PAMPHLET GENERATOR -->
+            <div class="admin-tab-content" id="tab-panfleto">
+                <div class="admin-content-grid" style="grid-template-columns: 350px 1fr; gap: 30px; align-items: start;">
+                    
+                    <!-- Left Column Wrapper -->
+                    <div style="display: flex; flex-direction: column; gap: 24px; width: 100%;">
+                        <!-- Flyer Controls Block -->
+                        <section class="admin-card flyer-controls-card">
+                        <div class="admin-card-header">
+                            <h2>Configurar Panfleto</h2>
+                        </div>
+                        <div class="admin-card-body">
+                            <form id="flyer-config-form" onsubmit="event.preventDefault();">
+
+                                <div class="form-group">
+                                    <label for="flyer-title">Título do Panfleto</label>
+                                    <input type="text" id="flyer-title" value="RaviLar Utilidades" placeholder="Ex: Ofertas Incríveis">
+                                </div>
+                                <div class="form-group">
+                                    <label for="flyer-subtitle">Subtítulo / Campanha</label>
+                                    <input type="text" id="flyer-subtitle" value="Festival de Ofertas" placeholder="Ex: Utilidades e Cozinha">
+                                </div>
+                                <div class="form-group">
+                                    <label for="flyer-validity">Validade das Ofertas</label>
+                                    <input type="text" id="flyer-validity" value="Válido até domingo ou enquanto durar o estoque" placeholder="Ex: De 15 a 20 de Julho">
+                                </div>
+                                <div class="form-group">
+                                    <label for="flyer-bg-color">Cor do Cabeçalho</label>
+                                    <input type="color" id="flyer-bg-color" value="#ffffff" style="height: 44px; padding: 2px; cursor: pointer; border-radius: 4px; border: 1px solid var(--border-color); width: 100%;">
+                                </div>
+                                <div class="form-group">
+                                    <label for="flyer-columns">Colunas do Grid</label>
+                                    <select id="flyer-columns" style="height: 44px; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-color); width: 100%;">
+                                        <option value="2">2 Colunas</option>
+                                        <option value="3" selected>3 Colunas</option>
+                                        <option value="4">4 Colunas</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="flyer-align">Alinhamento do Cabeçalho</label>
+                                    <select id="flyer-align" style="height: 44px; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border-color); width: 100%;">
+                                        <option value="left" selected>Esquerda</option>
+                                        <option value="center">Centro</option>
+                                        <option value="right">Direita</option>
+                                    </select>
+                                </div>
+
+                                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+                                <div class="admin-card-header" style="padding: 0 0 12px 0; margin-bottom: 12px; border-bottom: 0; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <h3 style="font-size: 1.05rem; font-weight: 600; color: var(--primary-color); margin: 0;">Selecione os Produtos</h3>
+                                    <button id="btn-clear-flyer-selection" style="background: none; border: none; color: var(--error-color); font-size: 0.8rem; font-weight: 700; cursor: pointer; padding: 0; text-decoration: underline; transition: opacity 0.2s;">
+                                        Limpar tudo
+                                    </button>
+                                </div>
+
+                                <div class="search-box" style="margin-bottom: 12px; width: 100%;">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <input type="text" id="flyer-search" placeholder="Buscar produtos...">
+                                </div>
+
+                                <div class="form-group">
+                                    <select id="flyer-category-filter" style="width: 100%; padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                                        <option value="all">Todas as Categorias</option>
+                                    </select>
+                                </div>
+
+                                <!-- Checklist of products -->
+                                <div class="flyer-product-select-list" id="flyer-product-select-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px; background-color: var(--bg-light); display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px;">
+                                    <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0;">
+                                        <i class="fa-solid fa-spinner fa-spin"></i> Carregando produtos...
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 10px; width: 100%;">
+                                    <button class="btn btn-primary" id="btn-print-flyer" style="flex-grow: 1; padding: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                        Imprimir Panfleto <i class="fa-solid fa-print"></i>
+                                    </button>
+                                    <button class="btn btn-secondary" id="btn-save-flyer-quick" title="Salvar Panfleto" style="width: 54px; height: 50px; background-color: #2b6cb0; color: white; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; transition: background-color 0.2s;">
+                                        <i class="fa-solid fa-floppy-disk"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Saved Flyers List Block -->
+                    <section class="admin-card saved-flyers-card" style="margin-top: 0;">
+                        <div class="admin-card-header">
+                            <h2>Panfletos Salvos</h2>
+                        </div>
+                        <div class="admin-card-body" style="padding: 16px;">
+                            <div id="saved-flyers-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 12px 0;">
+                                    Nenhum panfleto salvo ainda.
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                    <!-- Flyer Preview Block -->
+                    <section class="admin-card flyer-preview-card" style="position: sticky; top: 100px;">
+                        <div class="admin-card-header" style="justify-content: space-between;">
+                            <h2>Pré-visualização do Panfleto</h2>
+                            <span class="badge" style="background-color: var(--accent-color); color: white; font-weight: 600;" id="flyer-selected-count">0 produtos selecionados</span>
+                        </div>
+                        <div class="admin-card-body flyer-preview-body">
+                            <!-- The A4 Sheet Simulator -->
+                            <div class="flyer-a4-sheet" id="flyer-a4-sheet">
+                                <div class="flyer-header" id="flyer-header-preview" style="background-color: #ffffff; color: #1e293b;">
+                                    <div class="flyer-logo-area">
+                                        <img src="LogoSite.png" alt="RaviLar Utilidades" class="flyer-logo-img">
+                                    </div>
+                                    <div class="flyer-header-content">
+                                        <h1 id="flyer-title-preview">RaviLar Utilidades</h1>
+                                        <h2 id="flyer-subtitle-preview">Festival de Ofertas</h2>
+                                        <span class="flyer-badge-validity" id="flyer-validity-preview">Válido até domingo ou enquanto durar o estoque</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flyer-body">
+                                    <div class="flyer-grid col-3" id="flyer-products-grid">
+                                        <!-- Selected products will be rendered here dynamically -->
+                                        <div class="flyer-empty-state">
+                                            <i class="fa-solid fa-file-image fa-3x" style="color: var(--text-muted); margin-bottom: 12px; display: block;"></i>
+                                            <p>Selecione produtos no painel ao lado para gerar o panfleto.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flyer-footer">
+                                    <div class="flyer-footer-divider"></div>
+                                    <p>Ofertas válidas para as datas indicadas ou enquanto durarem os estoques. Fotos meramente ilustrativas. Reservamo-nos o direito de corrigir eventuais erros gráficos.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+
         </div>
     </main>
+
+    <!-- Custom Confirm Modal -->
+    <div id="custom-confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div style="background: white; border-radius: 8px; width: 400px; max-width: 90%; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); box-sizing: border-box;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                <i class="fa-solid fa-circle-question" style="color: #2b6cb0; font-size: 1.8rem;"></i>
+                <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #1e293b; font-family: var(--font-title);">Confirmação</h3>
+            </div>
+            <p id="custom-confirm-message" style="margin: 0 0 24px 0; color: #4a5568; font-size: 0.95rem; line-height: 1.5; font-family: var(--font-body);"></p>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button id="btn-confirm-cancel" style="padding: 10px 16px; font-size: 0.85rem; background-color: #edf2f7; color: #4a5568; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: background 0.2s; font-family: var(--font-body);">
+                    Cancelar
+                </button>
+                <button id="btn-confirm-ok" style="padding: 10px 16px; font-size: 0.85rem; background-color: #2b6cb0; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; transition: background 0.2s; font-family: var(--font-body);">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Administrative Toast Messages -->
     <div class="admin-status-toast" id="admin-toast">

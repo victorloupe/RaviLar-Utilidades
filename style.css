@@ -912,7 +912,7 @@ button {
    TESTIMONIALS SECTION
    ========================================================================== */
 .testimonials-section {
-    padding: 80px 0;
+    padding: 35px 0 25px;
     background-color: var(--bg-cream);
 }
 
@@ -989,14 +989,20 @@ button {
    CONTACT SECTION
    ========================================================================== */
 .contact-section {
-    padding: 80px 0;
+    padding: 40px 0;
 }
 
 .contact-container {
-    display: grid;
-    grid-template-columns: 5fr 7fr;
-    gap: 64px;
-    align-items: start;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.contact-info-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
 }
 
 .contact-info-block h2 {
@@ -1010,32 +1016,22 @@ button {
 .contact-info-block > p {
     color: var(--text-muted);
     margin-bottom: 40px;
+    max-width: 600px;
 }
 
 .contact-details {
     display: flex;
-    flex-direction: column;
-    gap: 28px;
+    flex-direction: row;
+    justify-content: center;
+    gap: 40px;
     margin-bottom: 40px;
+    width: 100%;
 }
 
 .contact-item {
     display: flex;
-    gap: 20px;
-    align-items: flex-start;
-}
-
-.contact-icon {
-    font-size: 1.25rem;
-    color: var(--accent-color);
-    background-color: var(--accent-light);
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    text-align: center;
 }
 
 .contact-item h4 {
@@ -1059,6 +1055,7 @@ button {
 .social-links {
     display: flex;
     gap: 12px;
+    justify-content: center;
 }
 
 .social-links a {
@@ -1456,7 +1453,7 @@ button {
 
 /* Cart Footer Panel */
 .cart-drawer-footer {
-    padding: 24px;
+    padding: 24px 24px calc(24px + env(safe-area-inset-bottom, 12px));
     border-top: 1px solid var(--border-color);
     background-color: var(--bg-light);
 }
@@ -1576,6 +1573,8 @@ button {
 .modal-product-layout {
     display: grid;
     grid-template-columns: 1fr 1.2fr;
+    height: 600px;
+    max-height: 90vh;
 }
 
 .modal-product-image {
@@ -1585,6 +1584,8 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 24px;
+    min-width: 0; /* Prevents flex children (thumbnails) from expanding grid column width */
 }
 
 .modal-product-image img {
@@ -1594,11 +1595,12 @@ button {
 }
 
 .modal-product-info {
-    padding: 40px;
+    padding: 32px;
+    padding-right: 48px; /* Clear close button area */
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    max-height: 90vh;
+    max-height: 100%;
 }
 
 .modal-product-category {
@@ -1619,13 +1621,22 @@ button {
     line-height: 1.3;
 }
 
+.modal-product-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
 .modal-product-stars {
     display: flex;
     align-items: center;
     gap: 4px;
     color: #F6AD55;
     font-size: 0.85rem;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .modal-product-stars span {
@@ -1639,7 +1650,7 @@ button {
     font-size: 2rem;
     font-weight: 800;
     color: var(--primary-color);
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .modal-product-desc {
@@ -1653,7 +1664,7 @@ button {
     display: flex;
     gap: 16px;
     margin-top: auto;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Keep quantity and cart button on the same line */
 }
 
 .quantity-selector {
@@ -1783,8 +1794,13 @@ button {
     }
     
     .contact-container {
-        grid-template-columns: 1fr;
-        gap: 48px;
+        gap: 32px;
+    }
+    
+    .contact-details {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
     }
     
     .footer-grid {
@@ -1874,16 +1890,49 @@ button {
     
     /* Modal details responsive */
     .modal-product-layout {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        height: auto;
     }
     
     .modal-product-image {
-        min-height: 250px;
-        height: 250px;
+        min-height: auto;
+        height: auto;
+        padding: 12px 16px 4px 16px;
+        flex-shrink: 0;
+    }
+    
+    .product-gallery-wrapper {
+        gap: 8px !important;
     }
     
     .modal-product-info {
-        padding: 24px;
+        padding: 8px 24px 24px 24px;
+        flex-grow: 1;
+        overflow-y: auto;
+    }
+    
+    .modal-purchase-controls {
+        flex-wrap: nowrap !important;
+        gap: 12px !important;
+    }
+    
+    .modal-purchase-controls .btn-primary {
+        padding: 12px 16px !important;
+        font-size: 0.85rem !important;
+        white-space: nowrap;
+    }
+    
+    .modal-purchase-controls .qty-btn {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .modal-purchase-controls .qty-val {
+        padding: 0 8px !important;
+        min-width: 32px !important;
+        font-size: 0.95rem !important;
     }
     
     /* Checkout modal form fields responsive */
@@ -1938,7 +1987,25 @@ button {
     }
     
     .categories-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .category-img-container {
+        height: 120px;
+    }
+
+    .category-info {
+        padding: 12px 10px;
+    }
+
+    .category-info h3 {
+        font-size: 0.95rem;
+        margin-bottom: 4px;
+    }
+
+    .category-info span {
+        font-size: 0.78rem;
     }
     
     .testimonials-grid {
@@ -2440,7 +2507,8 @@ button {
 
 .gallery-main {
     width: 100%;
-    height: 350px;
+    aspect-ratio: 1 / 1;
+    height: auto;
     border-radius: var(--border-radius-sm);
     overflow: hidden;
     background-color: var(--bg-light);
@@ -2561,11 +2629,12 @@ button {
     
     /* Layout details page sheet style for mobile */
     .modal-container {
-        max-height: 85vh;
+        max-height: 93vh;
         border-radius: var(--border-radius) var(--border-radius) 0 0;
         position: fixed;
         bottom: 0;
         margin: 0;
+        overflow: hidden; /* Prevent form/details contents from spilling out */
     }
 
     .modal-overlay {
@@ -2574,15 +2643,63 @@ button {
     }
 
     .gallery-main {
-        height: 250px;
+        height: auto;
+        aspect-ratio: 1 / 1;
+    }
+    
+    .modal-product-layout {
+        display: flex;
+        flex-direction: column;
+        max-height: 93vh;
+        height: auto;
     }
     
     .modal-product-info {
-        padding: 20px 16px 32px !important;
+        padding: 8px 16px calc(32px + env(safe-area-inset-bottom, 12px)) !important;
+        flex-grow: 1;
+        overflow-y: auto;
+        max-height: none !important;
+    }
+    
+    #checkout-form {
+        padding: 20px 24px calc(32px + env(safe-area-inset-bottom, 12px)) !important;
+        max-height: calc(93vh - 120px) !important;
+        overflow-y: auto;
     }
     
     .modal-product-info h2 {
         font-size: 1.4rem !important;
+    }
+
+    /* Horizontal scroll for categories on mobile */
+    .filter-categories {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 8px !important;
+        padding: 4px 0 !important;
+        margin: 0 0 16px !important;
+        justify-content: flex-start !important;
+        scrollbar-width: none !important;
+        width: 100% !important;
+    }
+    .filter-categories::-webkit-scrollbar {
+        display: none !important;
+    }
+    .filter-btn {
+        flex-shrink: 0 !important;
+    }
+
+    /* Increase pagination button size for mobile fingers */
+    .pagination-btn {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 0.95rem !important;
+    }
+    .catalog-pagination {
+        gap: 10px !important;
+        margin-top: 36px !important;
     }
 }
 
@@ -2610,19 +2727,25 @@ button {
    ========================================================================== */
 .admin-tabs {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 32px;
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 0;
     flex-wrap: wrap;
 }
 
+@media (max-width: 768px) {
+    .admin-tabs {
+        justify-content: center;
+    }
+}
+
 .admin-tab-btn {
-    padding: 12px 24px;
+    padding: 10px 16px;
     background: none;
     border: none;
     font-family: var(--font-title);
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-muted);
     cursor: pointer;
@@ -2631,7 +2754,7 @@ button {
     border-bottom: 3px solid transparent;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .admin-tab-btn:hover {
@@ -2693,8 +2816,8 @@ button {
 
 .ct-image {
     position: absolute;
-    width: 180px;
-    height: 240px;
+    width: 220px;
+    height: 220px;
     object-fit: cover;
     border-radius: 1.2rem;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
@@ -2760,8 +2883,8 @@ button {
         gap: 24px;
     }
     .ct-image {
-        width: 160px;
-        height: 210px;
+        width: 180px;
+        height: 180px;
     }
 }
 
@@ -2778,8 +2901,8 @@ button {
     }
     
     .ct-image {
-        width: 140px;
-        height: 190px;
+        width: 150px;
+        height: 150px;
     }
     
     .testimonials-content-wrapper {
@@ -2940,3 +3063,688 @@ button {
         right: 0px;
     }
 }
+
+/* ==========================================================================
+   ADMIN LOGIN SCREEN & PASSWORD TOGGLE STYLES
+   ========================================================================== */
+.admin-login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+    background-image: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+}
+
+.login-card {
+    background-color: var(--bg-white);
+    padding: 40px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow-modal);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    animation: modalReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.login-logo {
+    max-width: 180px;
+    margin-bottom: 24px;
+}
+
+.login-card h2 {
+    font-family: var(--font-title);
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.login-card p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 32px;
+}
+
+.password-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: var(--transition-smooth);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle-btn:hover {
+    color: var(--primary-color);
+}
+
+.login-error-message {
+    background-color: rgba(197, 48, 48, 0.1);
+    color: var(--error-color);
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+/* ==========================================================================
+   FLYER GENERATOR & PRINT STYLES
+   ========================================================================== */
+.flyer-product-select-list {
+    scrollbar-width: thin;
+}
+
+.flyer-select-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-white);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    user-select: none;
+}
+
+.flyer-select-item:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(229, 62, 62, 0.02);
+}
+
+.flyer-select-item.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(229, 62, 62, 0.05);
+}
+
+.flyer-select-img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    background-color: var(--bg-light);
+    border: 1px solid var(--border-color);
+}
+
+.flyer-select-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.flyer-select-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.flyer-select-price {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.flyer-select-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+    cursor: pointer;
+}
+
+/* A4 Sheet Preview Canvas */
+.flyer-a4-sheet {
+    width: 794px;
+    height: 1123px;
+    background-color: #ffffff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    transform: scale(0.58);
+    transform-origin: top center;
+    margin-bottom: -470px;
+}
+
+.flyer-preview-body {
+    background-color: #525659;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    height: 680px;
+    overflow: hidden;
+    position: relative;
+}
+
+.flyer-header {
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    border-bottom: 1px solid #edf2f7;
+}
+
+.flyer-logo-area {
+    width: 140px;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.flyer-logo-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.flyer-header-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: inherit;
+}
+
+.flyer-header-content h1 {
+    font-family: var(--font-title);
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.flyer-header-content h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    opacity: 0.9;
+}
+
+.flyer-badge-validity {
+    display: inline-block;
+    background-color: #FEEBC8;
+    color: #C05621;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    margin-top: 4px;
+    align-self: flex-start;
+}
+
+.flyer-body {
+    flex-grow: 1;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+.flyer-grid {
+    display: grid;
+    gap: 20px;
+    height: 100%;
+    align-content: start;
+}
+
+.flyer-grid.col-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.flyer-grid.col-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.flyer-grid.col-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Flyer Product Card */
+.flyer-card {
+    background-color: white;
+    border: 2px solid #edf2f7;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    box-sizing: border-box;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.flyer-card-img-wrapper {
+    width: 100%;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    overflow: hidden;
+    background-color: var(--bg-white);
+}
+
+.flyer-card-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.flyer-card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    height: auto;
+    line-height: 1.3;
+    display: block;
+    overflow: visible;
+}
+
+.flyer-card-price-tag {
+    display: flex;
+    align-items: flex-start;
+    color: #E53E3E;
+    font-family: var(--font-title);
+    margin-top: auto;
+}
+
+.flyer-price-currency {
+    font-size: 0.9rem;
+    font-weight: 800;
+    margin-top: 4px;
+    margin-right: 2px;
+}
+
+.flyer-price-integer {
+    font-size: 2.3rem;
+    font-weight: 900;
+    line-height: 0.9;
+}
+
+.flyer-price-cents {
+    font-size: 0.9rem;
+    font-weight: 800;
+    margin-top: 4px;
+    border-bottom: 2px solid #E53E3E;
+    line-height: 1;
+}
+
+.flyer-card-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background-color: #E53E3E;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.flyer-empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.flyer-empty-state p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.flyer-footer {
+    padding: 16px 24px;
+    text-align: center;
+    background-color: white;
+}
+
+.flyer-footer-divider {
+    border-top: 2px dashed #edf2f7;
+    margin-bottom: 12px;
+}
+
+.flyer-footer p {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Print Styles */
+@media print {
+    /* Hide all main elements of the site */
+    header, footer, nav, .admin-tabs, .flyer-controls-card, .admin-card-header, .admin-status-toast {
+        display: none !important;
+    }
+    
+    body > :not(main) {
+        display: none !important;
+    }
+    
+    /* Reset layout of all parent containers of the flyer sheet */
+    .admin-container, main, #tab-panfleto, .admin-content-grid, .flyer-preview-card, .admin-card-body {
+        display: contents !important;
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        height: auto !important;
+        border: none !important;
+        box-shadow: none !important;
+        transform: none !important;
+        background: transparent !important;
+    }
+    
+    body, html {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        overflow: hidden !important;
+    }
+
+    #flyer-a4-sheet {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 210mm !important;
+        height: 297mm !important;
+        max-height: 297mm !important;
+        max-width: 210mm !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        transform: none !important;
+        box-sizing: border-box !important;
+        background: white !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #flyer-a4-sheet, #flyer-a4-sheet * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+}
+
+/* Header alignment options */
+.flyer-header.align-left {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+}
+.flyer-header.align-left .flyer-header-content {
+    align-items: flex-start !important;
+}
+.flyer-header.align-left .flyer-badge-validity {
+    align-self: flex-start !important;
+}
+
+.flyer-header.align-center {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 12px !important;
+}
+.flyer-header.align-center .flyer-header-content {
+    align-items: center !important;
+}
+.flyer-header.align-center .flyer-badge-validity {
+    align-self: center !important;
+}
+
+.flyer-header.align-right {
+    flex-direction: row-reverse !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    text-align: right !important;
+}
+.flyer-header.align-right .flyer-header-content {
+    align-items: flex-end !important;
+}
+.flyer-header.align-right .flyer-badge-validity {
+    align-self: flex-end !important;
+}
+
+/* Compact Layout Modifications */
+
+/* 7 to 9 items: Medium compactness */
+.flyer-a4-sheet.compact-medium .flyer-header {
+    padding: 16px;
+    gap: 16px;
+}
+.flyer-a4-sheet.compact-medium .flyer-logo-area {
+    width: 120px;
+    height: 45px;
+    padding: 0;
+}
+.flyer-a4-sheet.compact-medium .flyer-header-content h1 {
+    font-size: 1.5rem;
+}
+.flyer-a4-sheet.compact-medium .flyer-header-content h2 {
+    font-size: 0.95rem;
+}
+.flyer-a4-sheet.compact-medium .flyer-badge-validity {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+}
+.flyer-a4-sheet.compact-medium .flyer-body {
+    padding: 16px;
+}
+.flyer-a4-sheet.compact-medium .flyer-grid {
+    gap: 14px;
+}
+.flyer-a4-sheet.compact-medium .flyer-card {
+    padding: 12px;
+}
+.flyer-a4-sheet.compact-medium .flyer-card-img-wrapper {
+    height: 95px;
+    margin-bottom: 8px;
+    aspect-ratio: auto;
+}
+.flyer-a4-sheet.compact-medium .flyer-card-title {
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    height: auto;
+    line-height: 1.2;
+}
+.flyer-a4-sheet.compact-medium .flyer-price-integer {
+    font-size: 1.9rem;
+}
+.flyer-a4-sheet.compact-medium .flyer-price-currency,
+.flyer-a4-sheet.compact-medium .flyer-price-cents {
+    font-size: 0.8rem;
+}
+
+/* 10 or more items: Extra compactness */
+.flyer-a4-sheet.compact-extra .flyer-header {
+    padding: 12px 16px;
+    gap: 12px;
+}
+.flyer-a4-sheet.compact-extra .flyer-logo-area {
+    width: 100px;
+    height: 38px;
+    padding: 0;
+}
+.flyer-a4-sheet.compact-extra .flyer-header-content h1 {
+    font-size: 1.3rem;
+}
+.flyer-a4-sheet.compact-extra .flyer-header-content h2 {
+    font-size: 0.85rem;
+}
+.flyer-a4-sheet.compact-extra .flyer-badge-validity {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    margin-top: 2px;
+}
+.flyer-a4-sheet.compact-extra .flyer-body {
+    padding: 12px;
+}
+.flyer-a4-sheet.compact-extra .flyer-grid {
+    gap: 10px;
+}
+.flyer-a4-sheet.compact-extra .flyer-card {
+    padding: 8px;
+    border-width: 1px;
+}
+.flyer-a4-sheet.compact-extra .flyer-card-img-wrapper {
+    height: 75px;
+    margin-bottom: 4px;
+    aspect-ratio: auto;
+}
+.flyer-a4-sheet.compact-extra .flyer-card-title {
+    font-size: 0.72rem;
+    margin-bottom: 4px;
+    height: auto;
+    line-height: 1.1;
+}
+.flyer-a4-sheet.compact-extra .flyer-price-integer {
+    font-size: 1.55rem;
+}
+.flyer-a4-sheet.compact-extra .flyer-price-currency,
+.flyer-a4-sheet.compact-extra .flyer-price-cents {
+    font-size: 0.72rem;
+}
+.flyer-a4-sheet.compact-extra .flyer-card-badge {
+    top: 4px;
+    left: 4px;
+    padding: 2px 4px;
+    font-size: 0.6rem;
+}
+.flyer-a4-sheet.compact-extra .flyer-footer {
+    padding: 10px 16px;
+}
+.flyer-a4-sheet.compact-extra .flyer-footer p {
+    font-size: 0.55rem;
+}
+.flyer-a4-sheet.compact-extra .flyer-footer-divider {
+    margin-bottom: 6px;
+}
+
+/* Saved Flyer List Premium Layout */
+.saved-flyer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background-color: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.saved-flyer-item:hover {
+    background-color: var(--bg-white);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.saved-flyer-item span {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+.saved-flyer-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.saved-flyer-actions button {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.saved-flyer-actions button.btn-load {
+    background-color: #2b6cb0;
+    color: white;
+}
+
+.saved-flyer-actions button.btn-load:hover {
+    background-color: #1a4f76;
+}
+
+.saved-flyer-actions button.btn-del {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.saved-flyer-actions button.btn-del:hover {
+    background-color: #c53030;
+}
+
+
+
