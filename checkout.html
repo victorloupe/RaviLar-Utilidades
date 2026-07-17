@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Finalizar Compra - RaviLar Utilidades</title>
+    <meta name="robots" content="noindex">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase JS Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light checkout-body">
+
+    <!-- Simple Header for Checkout -->
+    <header class="main-header scrolled">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <img src="LogoSite.png" alt="RaviLar Utilidades" class="logo-img">
+            </a>
+            <div class="header-actions">
+                <a href="index.html" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Voltar à Loja
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="checkout-page-container">
+        <div class="checkout-grid">
+            
+            <!-- LEFT COLUMN: Address and Payment Info -->
+            <div class="checkout-left">
+                
+                <!-- Identification/Auth Info Box -->
+                <div class="checkout-card" id="checkout-auth-info" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <span style="font-weight: 700; color: var(--primary-color);" id="checkout-user-welcome">Olá, Cliente</span>
+                            <p style="font-size: 0.85rem; color: var(--text-muted);">Você está logado e seus dados serão salvos automaticamente.</p>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="btn-checkout-logout" style="padding: 6px 12px; font-size: 0.78rem;">Sair</button>
+                    </div>
+                </div>
+
+                <div class="checkout-card" id="checkout-guest-info">
+                    <p style="font-size: 0.9rem; color: var(--text-dark);">
+                        Quer finalizar mais rápido, salvar seus endereços e ver seus pedidos? 
+                        <a href="cliente.html?redirect=checkout.html" class="auth-toggle-link" style="font-weight: 700;">Faça login ou cadastre-se</a> antes de comprar!
+                    </p>
+                </div>
+
+                <!-- Step 1: Delivery Details -->
+                <div class="checkout-card">
+                    <h2 class="checkout-card-title">
+                        <i class="fa-solid fa-truck-ramp-box"></i> 1. Dados de Entrega
+                    </h2>
+                    
+                    <!-- Saved Addresses Selector (shown only if logged in and has addresses) -->
+                    <div class="form-group" id="saved-addresses-selector-group" style="display: none; margin-bottom: 20px;">
+                        <label for="checkout-saved-address" style="font-weight: 700; margin-bottom: 8px; display: block;">Selecione um Endereço Salvo</label>
+                        <select id="checkout-saved-address" style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 0.95rem;">
+                            <option value="new">-- Cadastrar Novo Endereço --</option>
+                        </select>
+                    </div>
+
+                    <form id="checkout-delivery-form">
+                        <div class="form-row">
+                            <div class="form-group col-6">
+                                <label for="delivery-name">Nome Completo</label>
+                                <input type="text" id="delivery-name" required placeholder="Ex: João da Silva">
+                            </div>
+                            <div class="form-group col-6">
+                                <label for="delivery-phone">Telefone / WhatsApp</label>
+                                <input type="tel" id="delivery-phone" required placeholder="Ex: (17) 99999-9999">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-4">
+                                <label for="delivery-cep">CEP</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="delivery-cep" required placeholder="00000-000" style="flex: 1;">
+                                </div>
+                            </div>
+                            <div class="form-group col-8">
+                                <label for="delivery-street">Rua / Avenida</label>
+                                <input type="text" id="delivery-street" required placeholder="Ex: Rua das Flores">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group col-3">
+                                <label for="delivery-number">Nº</label>
+                                <input type="text" id="delivery-number" required placeholder="Ex: 123">
+                            </div>
+                            <div class="form-group col-5">
+                                <label for="delivery-neighborhood">Bairro</label>
+                                <input type="text" id="delivery-neighborhood" required placeholder="Ex: Centro">
+                            </div>
+                            <div class="form-group col-4">
+                                <label for="delivery-city">Cidade - UF</label>
+                                <input type="text" id="delivery-city" required placeholder="Ex: São Paulo - SP">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="delivery-complement">Complemento (Opcional)</label>
+                            <input type="text" id="delivery-complement" placeholder="Ex: Apto 45 Bloco B">
+                        </div>
+
+                        <!-- Shipping Options Container (populated dynamically) -->
+                        <div id="shipping-options-group" style="display: none; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                            <label style="font-weight: 700; margin-bottom: 12px; display: block; color: var(--text-dark); font-family: var(--font-title);">Opções de Envio Disponíveis</label>
+                            <div id="shipping-options-list" style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- Radio buttons populated dynamically -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Step 2: Payment Details (InfinitePay) -->
+                <div class="checkout-card">
+                    <h2 class="checkout-card-title">
+                        <i class="fa-solid fa-credit-card"></i> 2. Pagamento Integrado (InfinitePay)
+                    </h2>
+                    
+                    <!-- Payment Redirect Container -->
+                    <div class="payment-redirect-container" style="text-align: center; padding: 15px 5px;">
+                        <p style="font-size: 1rem; font-weight: 600; color: var(--text-dark); margin-bottom: 25px; line-height: 1.5;">
+                            Você será redirecionado para a plataforma de pagamento seguro da <strong>InfinitePay</strong> para concluir o pagamento de forma simples por Pix, Cartão de Crédito ou Apple Pay.
+                        </p>
+                        
+                        <!-- Accepted Payment Methods Logos -->
+                        <div class="accepted-payments-row" style="display: flex; justify-content: center; gap: 30px; margin-bottom: 30px;">
+                            <div class="payment-logo-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <i class="fa-brands fa-pix" style="font-size: 2.2rem; color: #32BCAD;"></i>
+                                <span style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Pix</span>
+                            </div>
+                            <div class="payment-logo-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-credit-card" style="font-size: 2.2rem; color: #2B6CB0;"></i>
+                                <span style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Cartão</span>
+                            </div>
+                            <div class="payment-logo-item" style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <i class="fa-brands fa-apple-pay" style="font-size: 2.2rem; color: #000000;"></i>
+                                <span style="font-size: 0.72rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Apple Pay</span>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" id="btn-finish-checkout" style="width: 100%; max-width: 420px; padding: 14px 20px; font-size: 1.05rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 10px; border-radius: var(--border-radius-md); background-color: var(--primary-color); border-color: var(--primary-color); box-shadow: var(--shadow-md);">
+                            Finalizar Pedido e Pagar <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+            
+            <!-- RIGHT COLUMN: Order Summary -->
+            <div class="checkout-right">
+                
+                <div class="checkout-card" style="position: sticky; top: 110px;">
+                    <h2 class="checkout-card-title">
+                        <i class="fa-solid fa-basket-shopping"></i> Resumo do Pedido
+                    </h2>
+                    
+                    <!-- Items list -->
+                    <div class="summary-items-list" id="checkout-items-list">
+                        <!-- Dynamically filled by checkout.js -->
+                    </div>
+                    
+                    <!-- Totals -->
+                    <div class="totals-summary-box">
+                        <div class="totals-row" id="row-discount" style="display: none; color: #48BB78; font-weight: 600;">
+                            <span>Desconto</span>
+                            <span id="summary-discount">- R$ 0,00</span>
+                        </div>
+                        <div class="totals-row" style="font-weight: bold;">
+                            <span>Subtotal</span>
+                            <span id="summary-subtotal">R$ 0,00</span>
+                        </div>
+                        <div class="totals-row">
+                            <span>Frete</span>
+                            <span id="summary-shipping">R$ 15,00</span>
+                        </div>
+                        <div class="totals-row grand-total">
+                            <span>Total</span>
+                            <span id="summary-grand-total">R$ 0,00</span>
+                        </div>
+                    </div>
+
+                    <!-- Coupon Input Section -->
+                    <div class="coupon-section" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="coupon-input" placeholder="Cupom de Desconto" style="flex: 1; text-transform: uppercase; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); font-size: 0.9rem;">
+                            <button class="btn btn-secondary" id="btn-apply-coupon" style="margin: 0; padding: 10px 16px; font-weight: 600; font-size: 0.9rem; border-radius: var(--border-radius-sm);">Aplicar</button>
+                        </div>
+                        <div id="coupon-message" style="margin-top: 6px; font-size: 0.85rem; display: none;"></div>
+                    </div>
+
+                    <!-- Security Badge -->
+                    <div style="text-align: center;">
+                        <img src="https://static.infinitepay.io/assets/images/logo.svg" alt="InfinitePay Logo" style="height: 22px; filter: grayscale(1); opacity: 0.6; margin-bottom: 10px; display: none;">
+                        <div class="infinitepay-security-shield">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <span>Checkout protegido por InfinitePay</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- PROCESSING OVERLAY SCREEN (simulated payment process) -->
+    <div class="payment-processing-overlay" id="processing-overlay" style="display: none;">
+        <div class="infinitepay-loader" id="overlay-loader"></div>
+        <div class="success-checkmark-wrapper" id="overlay-checkmark" style="display: none;">
+            <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52" style="width: 100%; height: 100%;">
+                <circle class="checkmark-circle" cx="26" cy="26" r="25"/>
+                <path class="checkmark-check" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+            </svg>
+        </div>
+        <h3 id="overlay-status-title" style="font-family: var(--font-title); font-weight: 700; color: var(--primary-color); font-size: 1.3rem;">Processando pagamento...</h3>
+        <p id="overlay-status-desc" style="color: var(--text-muted); font-size: 0.95rem; text-align: center; max-width: 320px;">
+            Aguardando autorização da operadora InfinitePay. Não feche esta janela.
+        </p>
+    </div>
+
+    <!-- Simple Footer for Checkout -->
+    <footer class="main-footer" style="margin-top: 60px; padding: 24px 0; background-color: var(--primary-hover); border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="container footer-bottom-container">
+            <p>&copy; 2026 RaviLar Utilidades. Todos os direitos reservados.</p>
+            <div class="secure-site-badge" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #48BB78; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                <i class="fa-solid fa-shield-halved" style="font-size: 1rem;"></i> Ambiente 100% Seguro
+            </div>
+            <div class="payment-badges" style="display: flex; align-items: center; gap: 15px; font-size: 1.6rem;">
+                <i class="fa-brands fa-pix" title="Pix" style="color: #32BCAD;"></i>
+                <i class="fa-solid fa-credit-card" title="Cartão de Crédito" style="color: #2B6CB0;"></i>
+                <i class="fa-brands fa-apple-pay" title="Apple Pay" style="color: #FFFFFF;"></i>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom Script for Checkout -->
+    <script src="checkout.js"></script>
+</body>
+</html>

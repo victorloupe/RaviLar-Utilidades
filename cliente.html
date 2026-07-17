@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Minha Conta - RaviLar Utilidades</title>
+    <meta name="robots" content="noindex">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase JS Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-light portal-body">
+
+    <!-- Header -->
+    <header class="main-header scrolled">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <img src="LogoSite.png" alt="RaviLar Utilidades" class="logo-img">
+            </a>
+            <div class="header-actions">
+                <a href="index.html" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-house"></i> Voltar ao Início
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- SECTION 1: AUTHENTICATION CONTAINER (Hidden when logged in) -->
+    <div class="auth-wrapper" id="auth-section">
+        <div class="auth-card">
+            <div class="auth-header">
+                <img src="LogoSite.png" alt="RaviLar Utilidades" class="auth-logo">
+                <h2 class="auth-title" id="auth-form-title">Acesse sua Conta</h2>
+                <p class="auth-subtitle" id="auth-form-subtitle">Faça login para gerenciar seus pedidos e dados.</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="auth-email" style="text-align: left; display: block;">E-mail</label>
+                    <input type="email" id="auth-email" required placeholder="Digite seu e-mail">
+                </div>
+                <div class="form-group">
+                    <label for="auth-password" style="text-align: left; display: block;">Senha</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="auth-password" required placeholder="Digite sua senha">
+                        <button type="button" class="password-toggle-btn" aria-label="Mostrar senha">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" style="padding: 14px; font-weight: 700; font-size: 1rem;">
+                    Entrar <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
+            </form>
+
+            <!-- Signup Form (Hidden initially) -->
+            <form id="signup-form" style="display: none;">
+                <div class="form-group">
+                    <label for="signup-name" style="text-align: left; display: block;">Nome Completo</label>
+                    <input type="text" id="signup-name" required placeholder="Ex: João Silva">
+                </div>
+                <div class="form-group">
+                    <label for="signup-phone" style="text-align: left; display: block;">Telefone / WhatsApp</label>
+                    <input type="tel" id="signup-phone" required placeholder="Ex: (17) 99999-9999">
+                </div>
+                <div class="form-group">
+                    <label for="signup-email" style="text-align: left; display: block;">E-mail</label>
+                    <input type="email" id="signup-email" required placeholder="Ex: joao@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="signup-password" style="text-align: left; display: block;">Senha (mínimo 6 caracteres)</label>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="signup-password" required placeholder="Escolha uma senha forte">
+                        <button type="button" class="password-toggle-btn" aria-label="Mostrar senha">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" style="padding: 14px; font-weight: 700; font-size: 1rem;">
+                    Criar Conta <i class="fa-solid fa-user-plus"></i>
+                </button>
+            </form>
+
+            <div style="margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 20px; font-size: 0.9rem;">
+                <span id="auth-toggle-text">Não tem uma conta ainda?</span> 
+                <span class="auth-toggle-link" id="btn-toggle-auth">Cadastre-se</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: PORTAL DASHBOARD CONTAINER (Shown when logged in) -->
+    <div class="portal-container" id="portal-section" style="display: none;">
+        
+        <!-- SIDEBAR NAVIGATION -->
+        <aside class="portal-sidebar">
+            <div class="portal-user-info">
+                <div class="portal-user-avatar" id="user-avatar-initials">U</div>
+                <div class="portal-user-name" id="user-display-name">Carregando...</div>
+                <div class="portal-user-email" id="user-display-email">...</div>
+            </div>
+            
+            <nav>
+                <ul class="portal-nav-list">
+                    <li>
+                        <button class="portal-nav-btn active" data-tab="resumo">
+                            <i class="fa-solid fa-chart-line"></i> Resumo
+                        </button>
+                    </li>
+                    <li>
+                        <button class="portal-nav-btn" data-tab="pedidos">
+                            <i class="fa-solid fa-box-open"></i> Meus Pedidos
+                        </button>
+                    </li>
+                    <li>
+                        <button class="portal-nav-btn" data-tab="enderecos">
+                            <i class="fa-solid fa-map-location-dot"></i> Meus Endereços
+                        </button>
+                    </li>
+
+                    <li>
+                        <button class="portal-nav-btn" data-tab="favoritos">
+                            <i class="fa-solid fa-heart"></i> Meus Favoritos
+                        </button>
+                    </li>
+                    <li>
+                        <button class="portal-nav-btn" data-tab="dados">
+                            <i class="fa-solid fa-id-card"></i> Meus Dados
+                        </button>
+                    </li>
+                    <li style="margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px;">
+                        <button class="portal-nav-btn" id="btn-portal-logout" style="color: #feb2b2;">
+                            <i class="fa-solid fa-right-from-bracket"></i> Sair da Conta
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- DASHBOARD CONTENT WRAPPER -->
+        <section class="portal-content">
+            
+            <!-- TAB 1: SUMMARY / PANORAMA -->
+            <div class="portal-tab-content active" id="tab-resumo">
+                <h2 class="portal-section-title"><i class="fa-solid fa-chart-line"></i> Visão Geral</h2>
+                <p style="margin-bottom: 25px; color: var(--text-dark); font-size: 1.05rem;">
+                    Bem-vindo à sua Área de cliente RaviLar! Aqui você pode acompanhar suas compras, salvar dados de entrega e gerenciar seus favoritos.
+                </p>
+
+                <div class="admin-metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon-box" style="background-color: #EBF8FF; color: #2B6CB0;">
+                            <i class="fa-solid fa-box"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Total de Pedidos</h3>
+                            <div class="metric-val" id="summary-total-orders">0</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon-box" style="background-color: #FAF5FF; color: #6B46C1;">
+                            <i class="fa-solid fa-heart"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Favoritos</h3>
+                            <div class="metric-val" id="summary-total-favorites">0</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon-box" style="background-color: #E6FFFA; color: #234E52;">
+                            <i class="fa-solid fa-map-pin"></i>
+                        </div>
+                        <div class="metric-info">
+                            <h3>Endereços</h3>
+                            <div class="metric-val" id="summary-total-addresses">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-card" style="margin-top: 30px; background-color: var(--bg-light); border-color: var(--accent-color);">
+                    <h3 style="font-family: var(--font-title); font-weight: 700; color: var(--primary-color); margin-bottom: 10px;">
+                        <i class="fa-solid fa-truck-fast" style="color: var(--accent-color); margin-right: 8px;"></i> Último Pedido Realizado
+                    </h3>
+                    <div id="summary-last-order-box">
+                        <p style="color: var(--text-muted); font-size: 0.95rem;">Nenhum pedido realizado ainda.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: ORDERS LIST -->
+            <div class="portal-tab-content" id="tab-pedidos">
+                <h2 class="portal-section-title"><i class="fa-solid fa-box-open"></i> Histórico de Pedidos</h2>
+                <div class="portal-orders-list" id="portal-orders-container">
+                    <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>Carregando seus pedidos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: ADDRESSES -->
+            <div class="portal-tab-content" id="tab-enderecos">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid var(--bg-light); padding-bottom: 15px;">
+                    <h2 class="portal-section-title" style="margin: 0; border: none; padding: 0;">
+                        <i class="fa-solid fa-map-location-dot"></i> Endereços de Entrega
+                    </h2>
+                    <button class="btn btn-primary btn-sm" id="btn-add-address-modal" style="margin: 0;">
+                        <i class="fa-solid fa-plus"></i> Novo Endereço
+                    </button>
+                </div>
+
+                <div class="addresses-grid" id="portal-addresses-container">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+
+
+            <!-- TAB 5: FAVORITES -->
+            <div class="portal-tab-content" id="tab-favoritos">
+                <h2 class="portal-section-title"><i class="fa-solid fa-heart"></i> Meus Favoritos</h2>
+                <div class="favorites-portal-grid" id="portal-favorites-container">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- TAB 6: DATA / SETTINGS -->
+            <div class="portal-tab-content" id="tab-dados">
+                <h2 class="portal-section-title"><i class="fa-solid fa-id-card"></i> Meus Dados Pessoais</h2>
+                
+                <form id="portal-profile-form" style="max-width: 500px; margin-bottom: 40px;">
+                    <div class="form-group">
+                        <label for="profile-name">Nome Completo</label>
+                        <input type="text" id="profile-name" required placeholder="Seu nome completo">
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-phone">WhatsApp / Telefone</label>
+                        <input type="tel" id="profile-phone" placeholder="(XX) XXXXX-XXXX">
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin: 0;">Salvar Alterações</button>
+                </form>
+
+                <h3 style="font-family: var(--font-title); font-size: 1.15rem; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 20px;">
+                    Segurança e Senha
+                </h3>
+
+                <form id="portal-password-form" style="max-width: 500px;">
+                    <div class="form-group">
+                        <label for="profile-new-password">Nova Senha (mínimo 6 dígitos)</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="profile-new-password" required placeholder="Nova senha de acesso">
+                            <button type="button" class="password-toggle-btn" aria-label="Mostrar senha">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile-confirm-password">Confirmar Nova Senha</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="profile-confirm-password" required placeholder="Confirme a nova senha">
+                            <button type="button" class="password-toggle-btn" aria-label="Mostrar senha">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary" style="margin: 0;">Alterar Senha</button>
+                </form>
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- MODAL: ORDER DETAILS -->
+    <div class="modal-overlay" id="order-details-modal">
+        <div class="modal-container" style="max-width: 650px;">
+            <button class="modal-close" id="order-details-modal-close" aria-label="Fechar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <div style="padding: 32px 48px 32px 32px;">
+                <h3 style="font-family: var(--font-title); font-size: 1.3rem; font-weight: 700; color: var(--primary-color); margin-bottom: 5px;" id="modal-order-id">
+                    Detalhes do Pedido
+                </h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;" id="modal-order-date">Realizado em: --</p>
+                
+                <!-- Status tracking progress bar -->
+                <div style="background-color: var(--bg-light); padding: 15px; border-radius: var(--border-radius-sm); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 700; color: var(--primary-color);">Status da Entrega:</span>
+                    <span id="modal-order-status-badge" class="status-badge pendente">Pendente</span>
+                </div>
+
+                <h4 style="font-family: var(--font-title); font-weight: 700; color: var(--primary-color); font-size: 0.95rem; margin-bottom: 12px;">Itens Comprados</h4>
+                <div id="modal-order-items-list" style="margin-bottom: 25px;">
+                    <!-- loaded dynamically -->
+                </div>
+
+                <div class="totals-summary-box" style="margin-bottom: 25px; padding: 15px;">
+                    <div class="totals-row" style="margin-bottom: 6px; font-size: 0.88rem;">
+                        <span>Forma de Pagamento:</span>
+                        <span id="modal-order-payment-method" style="font-weight: 600;">--</span>
+                    </div>
+                    <div class="totals-row" id="modal-order-discount-row" style="margin-bottom: 6px; font-size: 0.88rem; color: #48BB78; font-weight: 600; display: none;">
+                        <span id="modal-order-discount-label">Desconto:</span>
+                        <span id="modal-order-discount-amount">- R$ 0,00</span>
+                    </div>
+                    <div class="totals-row" style="margin-bottom: 6px; font-size: 0.88rem; font-weight: bold;">
+                        <span>Subtotal:</span>
+                        <span id="modal-order-subtotal">R$ 0,00</span>
+                    </div>
+                    <div class="totals-row" style="margin-bottom: 6px; font-size: 0.88rem;">
+                        <span>Frete:</span>
+                        <span id="modal-order-shipping-fee">R$ 0,00</span>
+                    </div>
+                    <div class="totals-row grand-total" style="font-size: 1.1rem; padding-top: 8px;">
+                        <span>Total Pago:</span>
+                        <span id="modal-order-total-amount">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <h4 style="font-family: var(--font-title); font-weight: 700; color: var(--primary-color); font-size: 0.95rem; margin-bottom: 8px;">Endereço de Entrega</h4>
+                <p id="modal-order-address-text" style="font-size: 0.9rem; color: var(--text-dark); line-height: 1.4; background-color: var(--bg-light); padding: 12px; border-radius: var(--border-radius-sm);">
+                    --
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT ADDRESS FORM -->
+    <div class="modal-overlay" id="address-form-modal">
+        <div class="modal-container modal-sm">
+            <button class="modal-close" id="address-form-modal-close" aria-label="Fechar modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <div class="checkout-modal-header" style="margin-bottom: 20px;">
+                <h3 id="address-modal-title">Novo Endereço de Entrega</h3>
+                <p>Cadastre um endereço para facilitar seus checkouts.</p>
+            </div>
+
+            <form id="address-modal-form">
+                <input type="hidden" id="address-id-field" value="">
+                
+                <div class="form-group">
+                    <label for="address-name-field">Nome do Endereço (Ex: Casa, Trabalho)</label>
+                    <input type="text" id="address-name-field" required placeholder="Ex: Casa">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group col-5">
+                        <label for="address-cep-field">CEP</label>
+                        <input type="text" id="address-cep-field" required placeholder="00000-000">
+                    </div>
+                    <div class="form-group col-7">
+                        <label for="address-street-field">Rua / Avenida</label>
+                        <input type="text" id="address-street-field" required placeholder="Ex: Rua das Flores">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-4">
+                        <label for="address-number-field">Nº</label>
+                        <input type="text" id="address-number-field" required placeholder="Ex: 123">
+                    </div>
+                    <div class="form-group col-8">
+                        <label for="address-neighborhood-field">Bairro</label>
+                        <input type="text" id="address-neighborhood-field" required placeholder="Ex: Centro">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-7">
+                        <label for="address-city-field">Cidade</label>
+                        <input type="text" id="address-city-field" required placeholder="Ex: São José do Rio Preto">
+                    </div>
+                    <div class="form-group col-5">
+                        <label for="address-uf-field">UF</label>
+                        <input type="text" id="address-uf-field" required placeholder="Ex: SP" maxlength="2">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="address-complement-field">Complemento (Opcional)</label>
+                    <input type="text" id="address-complement-field" placeholder="Ex: Apto 12 Bloco A">
+                </div>
+
+                <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="address-default-field" style="width: auto; margin: 0;">
+                    <label for="address-default-field" style="margin: 0; font-size: 0.9rem; cursor: pointer;">Definir como endereço padrão</label>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Salvar Endereço</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Simple Footer for Client Portal -->
+    <footer class="main-footer" style="margin-top: 60px; padding: 24px 0; background-color: var(--primary-hover); border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="container footer-bottom-container">
+            <p>&copy; 2026 RaviLar Utilidades. Todos os direitos reservados.</p>
+            <div class="secure-site-badge" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #48BB78; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                <i class="fa-solid fa-shield-halved" style="font-size: 1rem;"></i> Ambiente 100% Seguro
+            </div>
+            <div class="payment-badges" style="display: flex; align-items: center; gap: 15px; font-size: 1.6rem;">
+                <i class="fa-brands fa-pix" title="Pix" style="color: #32BCAD;"></i>
+                <i class="fa-solid fa-credit-card" title="Cartão de Crédito" style="color: #2B6CB0;"></i>
+                <i class="fa-brands fa-apple-pay" title="Apple Pay" style="color: #FFFFFF;"></i>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom Script for Portal -->
+    <script src="cliente.js"></script>
+</body>
+</html>

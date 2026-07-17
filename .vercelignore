@@ -1,0 +1,14 @@
+# Arquivos que NÃO devem ser publicados no site (ficam só no seu computador/repo)
+
+# Scripts de banco de dados
+*.sql
+
+# Planilhas e arquivos de trabalho
+*.xlsx
+*.psd
+
+# Funções do Supabase (são publicadas no Supabase, não na Vercel)
+supabase/
+
+# Outros
+.agents/

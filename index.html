@@ -12,6 +12,16 @@
     <meta name="description" content="Encontre os melhores utensílios domésticos, organizadores e itens de mesa posta na RaviLar Utilidades. Praticidade, qualidade e elegância para o seu lar.">
     <meta name="keywords" content="utensílios domésticos, organizadores, cozinha, mesa posta, decoração, casa, RaviLar">
     <meta name="author" content="RaviLar Utilidades">
+    <link rel="canonical" href="https://ravilarutilidades.com.br/">
+
+    <!-- Open Graph (aparência do link ao compartilhar no WhatsApp/redes) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="RaviLar Utilidades">
+    <meta property="og:title" content="RaviLar Utilidades - Utensílios Domésticos e Organização">
+    <meta property="og:description" content="Praticidade, qualidade e elegância para o seu lar. Utensílios de cozinha, organizadores, mesa posta e decoração com entrega para todo o Brasil.">
+    <meta property="og:image" content="https://ravilarutilidades.com.br/LogoSite.png">
+    <meta property="og:url" content="https://ravilarutilidades.com.br/">
+    <meta name="twitter:card" content="summary_large_image">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,6 +60,9 @@
 
             <!-- Actions (Cart and Mobile Menu) -->
             <div class="header-actions">
+                <a href="cliente.html" class="profile-trigger" id="profile-trigger" aria-label="Minha Conta" style="margin-right: 15px; color: var(--primary-color); font-size: 1.3rem; display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth);" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--primary-color)'">
+                    <i class="fa-solid fa-user"></i>
+                </a>
                 <button class="cart-trigger" id="cart-trigger" aria-label="Abrir carrinho">
                     <i class="fa-solid fa-bag-shopping"></i>
                     <span class="cart-badge" id="cart-badge">0</span>
@@ -254,11 +267,6 @@
                     </div>
                 </div>
                 
-                <div class="social-links">
-                    <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" aria-label="Pinterest"><i class="fa-brands fa-pinterest-p"></i></a>
-                </div>
             </div>
 
         </div>
@@ -281,7 +289,7 @@
             </div>
             
             <div class="footer-links">
-                <h4>Links Úteis</h4>
+                <h4>Links úteis</h4>
                 <ul>
                     <li><a href="#inicio">Início</a></li>
                     <li><a href="#produtos">Produtos</a></li>
@@ -295,16 +303,23 @@
                 <h4>Atendimento</h4>
                 <p><i class="fa-solid fa-clock"></i> Seg. a Sex. das 9h às 18h<br>Sábados das 9h às 13h</p>
                 <p><i class="fa-brands fa-whatsapp text-gold"></i> <a href="https://wa.me/5517996371743" target="_blank">(17) 99637-1743</a></p>
+                <p style="display: flex; align-items: center; gap: 18px;">
+                    <a href="#" id="social-instagram-footer" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram"><i class="fa-brands fa-instagram text-gold" style="font-size: 1.25rem;"></i></a>
+                    <a href="#" id="social-facebook-footer" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook"><i class="fa-brands fa-facebook-f text-gold" style="font-size: 1.15rem;"></i></a>
+                </p>
             </div>
         </div>
         
         <div class="footer-bottom">
             <div class="container footer-bottom-container">
                 <p>&copy; 2026 RaviLar Utilidades. Todos os direitos reservados.</p>
-                <div class="payment-badges">
-                    <i class="fa-brands fa-pix" title="Pix"></i>
-                    <i class="fa-solid fa-credit-card" title="Cartão de Crédito"></i>
-                    <i class="fa-solid fa-barcode" title="Boleto"></i>
+                <div class="secure-site-badge" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: #48BB78; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-shield-halved" style="font-size: 1rem;"></i> Ambiente 100% Seguro
+                </div>
+                <div class="payment-badges" style="display: flex; align-items: center; gap: 15px; font-size: 1.6rem;">
+                    <i class="fa-brands fa-pix" title="Pix" style="color: #32BCAD;"></i>
+                    <i class="fa-solid fa-credit-card" title="Cartão de Crédito" style="color: #2B6CB0;"></i>
+                    <i class="fa-brands fa-apple-pay" title="Apple Pay" style="color: #FFFFFF;"></i>
                 </div>
             </div>
         </div>
@@ -336,23 +351,23 @@
                 <span>Subtotal:</span>
                 <span class="cart-subtotal-val" id="cart-subtotal">R$ 0,00</span>
             </div>
-            <p class="shipping-info"><i class="fa-solid fa-truck"></i> Frete a combinar no fechamento.</p>
+            <p class="shipping-info"><i class="fa-solid fa-truck"></i> Frete grátis a partir de R$ 150.</p>
             <button class="btn btn-primary btn-block btn-checkout" id="checkout-trigger-btn" disabled>
-                Enviar Compra <i class="fa-brands fa-whatsapp"></i>
+                Finalizar Compra <i class="fa-solid fa-credit-card"></i>
             </button>
         </div>
     </div>
 
-    <!-- PRODUCT DETAILS MODAL (Updated for Multiple Media Gallery support) -->
+    <!-- Product Details Modal -->
     <div class="modal-overlay" id="product-modal">
-        <div class="modal-container">
+        <div class="modal-container modal-lg">
             <button class="modal-close" id="product-modal-close" aria-label="Fechar modal">
                 <i class="fa-solid fa-xmark"></i>
             </button>
             <div class="modal-product-layout">
                 <!-- Gallery with support for multiple images & videos -->
                 <div class="modal-product-image">
-                    <div class="product-gallery-wrapper">
+                    <div class="product-gallery-wrapper" style="display: flex; flex-direction: column; gap: 12px; width: 100%; height: 100%;">
                         <div class="gallery-main" id="gallery-main-container">
                             <img id="modal-product-img" src="" alt="Produto">
                         </div>
@@ -362,88 +377,46 @@
                     </div>
                 </div>
                 <div class="modal-product-info">
-                    <span class="modal-product-category" id="modal-product-cat">Categoria</span>
-                    <h2 id="modal-product-name">Nome do Produto</h2>
-                    <div class="modal-product-meta">
-                        <div class="modal-product-stars">
-                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
-                            <span>(15 avaliações)</span>
+                    <div class="modal-product-scrollable-content">
+                        <span class="modal-product-category" id="modal-product-cat">Categoria</span>
+                        <h2 id="modal-product-name">Nome do Produto</h2>
+                        <div class="modal-product-meta">
+                            <div class="modal-product-stars" id="modal-product-stars">
+                                <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                                <span>(15 avaliações)</span>
+                            </div>
+                            <div class="modal-product-price" id="modal-product-price">R$ 0,00</div>
                         </div>
-                        <div class="modal-product-price" id="modal-product-price">R$ 0,00</div>
+                        <p class="modal-product-desc" id="modal-product-desc">Descrição completa do produto.</p>
                     </div>
-                    <p class="modal-product-desc" id="modal-product-desc">Descrição completa do produto.</p>
-                    
+
+                    <!-- Variation selector (populated dynamically when the product has variations) -->
+                    <div id="modal-variations" style="display: none; margin-bottom: 18px;"></div>
+
                     <div class="modal-purchase-controls">
                         <div class="quantity-selector">
                             <button class="qty-btn" id="qty-minus" aria-label="Diminuir quantidade"><i class="fa-solid fa-minus"></i></button>
                             <span class="qty-val" id="qty-val">1</span>
                             <button class="qty-btn" id="qty-plus" aria-label="Aumentar quantidade"><i class="fa-solid fa-plus"></i></button>
                         </div>
-                        <button class="btn btn-primary" id="modal-add-to-cart-btn">
-                            Adicionar ao Carrinho <i class="fa-solid fa-cart-plus"></i>
-                        </button>
+                        <div class="action-buttons-group">
+                            <button class="btn btn-primary" id="modal-add-to-cart-btn">
+                                Adicionar ao Carrinho <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+                            <button class="modal-favorite-btn" id="modal-favorite-btn" title="Favoritar Produto">
+                                <i class="fa-regular fa-heart"></i>
+                            </button>
+                            <button class="modal-favorite-btn" id="modal-share-btn" title="Copiar link do produto">
+                                <i class="fa-solid fa-share-nodes"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- CHECKOUT DETAILS FORM MODAL -->
-    <div class="modal-overlay" id="checkout-modal">
-        <div class="modal-container modal-sm">
-            <button class="modal-close" id="checkout-modal-close" aria-label="Fechar modal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-            <div class="checkout-modal-header">
-                <h3>Dados de Entrega</h3>
-                <p>Preencha os dados abaixo para gerarmos seu pedido no WhatsApp.</p>
-            </div>
-            <form id="checkout-form">
-                <div class="form-group">
-                    <label for="checkout-phone">WhatsApp para contato</label>
-                    <input type="tel" id="checkout-phone" required placeholder="Ex: (11) 99999-9999">
-                    <span id="checkout-phone-status" style="font-size: 0.8rem; color: var(--success-color); display: none; margin-top: 4px; font-weight: 600;"></span>
-                </div>
-                <div class="form-group">
-                    <label for="checkout-name">Nome Completo</label>
-                    <input type="text" id="checkout-name" required placeholder="Ex: João da Silva">
-                </div>
-                <div class="form-row">
-                    <div class="form-group col-8">
-                        <label for="checkout-street">Rua / Avenida</label>
-                        <input type="text" id="checkout-street" required placeholder="Ex: Rua das Flores">
-                    </div>
-                    <div class="form-group col-4">
-                        <label for="checkout-number">Nº</label>
-                        <input type="text" id="checkout-number" required placeholder="123">
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group col-6">
-                        <label for="checkout-neighborhood">Bairro</label>
-                        <input type="text" id="checkout-neighborhood" required placeholder="Ex: Centro">
-                    </div>
-                    <div class="form-group col-6">
-                        <label for="checkout-city">Cidade / UF</label>
-                        <input type="text" id="checkout-city" required placeholder="Ex: São Paulo - SP">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="checkout-payment">Forma de Pagamento</label>
-                    <select id="checkout-payment" required>
-                        <option value="" disabled selected>Escolha uma opção</option>
-                        <option value="Pix">Pix (Chave Pix enviada no chat)</option>
-                        <option value="Cartão de Crédito">Cartão de Crédito</option>
-                        <option value="Cartão de Débito">Cartão de Débito</option>
-                        <option value="Dinheiro">Dinheiro na entrega</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block" id="whatsapp-submit-btn">
-                    Enviar Pedido pelo WhatsApp <i class="fa-brands fa-whatsapp"></i>
-                </button>
-            </form>
-        </div>
-    </div>
+    <!-- CHECKOUT DETAILS FORM MODAL REMOVED - CHECKOUT IN SEPARATE PAGE -->
 
     <!-- Custom Script -->
     <script src="app.js"></script>

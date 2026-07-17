@@ -1,3 +1,104 @@
+// Override native alert with custom toast
+window.alert = function(message) {
+    let type = "success";
+    const lowercaseMsg = message.toLowerCase();
+    if (lowercaseMsg.includes("erro") || lowercaseMsg.includes("falha") || lowercaseMsg.includes("recusado") || lowercaseMsg.includes("expirou") || lowercaseMsg.includes("limite")) {
+        type = "error";
+    } else if (lowercaseMsg.includes("precisa") || lowercaseMsg.includes("mínimo") || lowercaseMsg.includes("não") || lowercaseMsg.includes("vazio") || lowercaseMsg.includes("preencha") || lowercaseMsg.includes("obrigat")) {
+        type = "warning";
+    } else if (lowercaseMsg.includes("copiado") || lowercaseMsg.includes("adicionado")) {
+        type = "info";
+    }
+    
+    showToast(message, type);
+};
+
+function showToast(message, type = "success") {
+    let container = document.getElementById("custom-toast-container");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "custom-toast-container";
+        container.style.position = "fixed";
+        container.style.top = "24px";
+        container.style.right = "24px";
+        container.style.zIndex = "99999";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.gap = "12px";
+        container.style.maxWidth = "380px";
+        container.style.width = "calc(100% - 48px)";
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    
+    let iconClass = "fa-solid fa-circle-check";
+    let iconColor = "#22C55E";
+    let borderColor = "#22C55E";
+    
+    if (type === "success") {
+        iconClass = "fa-solid fa-circle-check";
+        iconColor = "#22C55E";
+        borderColor = "#22C55E";
+    } else if (type === "error") {
+        iconClass = "fa-solid fa-circle-xmark";
+        iconColor = "#EF4444";
+        borderColor = "#EF4444";
+    } else if (type === "warning") {
+        iconClass = "fa-solid fa-circle-exclamation";
+        iconColor = "#F59E0B";
+        borderColor = "#F59E0B";
+    } else if (type === "info") {
+        iconClass = "fa-solid fa-circle-info";
+        iconColor = "#3B82F6";
+        borderColor = "#3B82F6";
+    }
+
+    toast.style.display = "flex";
+    toast.style.alignItems = "center";
+    toast.style.gap = "14px";
+    toast.style.padding = "16px 20px";
+    toast.style.backgroundColor = "#FFFFFF";
+    toast.style.borderRadius = "10px";
+    toast.style.boxShadow = "0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05)";
+    toast.style.borderLeft = `4px solid ${borderColor}`;
+    toast.style.fontFamily = "'Montserrat', 'Inter', sans-serif";
+    toast.style.fontSize = "0.9rem";
+    toast.style.fontWeight = "500";
+    toast.style.color = "#2D3748";
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(50px)";
+    toast.style.transition = "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)";
+    toast.style.cursor = "pointer";
+
+    toast.innerHTML = `
+        <i class="${iconClass}" style="color: ${iconColor}; font-size: 1.3rem; flex-shrink: 0;"></i>
+        <div style="flex: 1; line-height: 1.5;">${message}</div>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "translateX(0)";
+    }, 10);
+
+    const dismiss = () => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateX(50px)";
+        setTimeout(() => {
+            toast.remove();
+        }, 400);
+    };
+
+    const timeoutId = setTimeout(dismiss, 5000);
+
+    toast.addEventListener("click", () => {
+        clearTimeout(timeoutId);
+        dismiss();
+    });
+}
+
 // ==========================================================================
 // SUPABASE CLIENT CONFIGURATION
 // ==========================================================================
@@ -6,6 +107,9 @@ const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 // Initialize Supabase Client
 const supabaseClient = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+
+// Auth & Favorites state
+let currentUser = null;
 
 // ==========================================================================
 // FALLBACK PRODUCTS DATABASE (If Supabase is not configured yet)
@@ -211,7 +315,7 @@ const FALLBACK_PRODUCTS = [
         category: "organizacao",
         price: 3.50,
         image: "https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&q=80&w=600",
-        description: "Mantenha mosquitos e insetos longe de crianças e bebês de forma natural e sem odor. Adesivos autocolantes com óleos essenciais naturais que podem ser colados em roupas, bonés ou carrinhos.",
+        description: "Mantenha mosquitos e insetos longe de crianças e bebês de forma natural e sem odor. Adesivos autocolantes com Óleos essenciais naturais que podem ser colados em roupas, bonés ou carrinhos.",
         badge: "Novidade",
         rating: 4.6,
         reviews: 17
@@ -343,7 +447,7 @@ const FALLBACK_PRODUCTS = [
         category: "cozinha",
         price: 8.99,
         image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=600",
-        description: "Otimize a pia da cozinha! Este dispenser dosador comporta detergente líquido no reservatório inferior e organiza a esponja na parte superior. Pressione para dosar o sabão direto na esponja sem desperdício.",
+        description: "Otimize a pia da cozinha! Este dispenser dosador comporta detergente líquido no reservatério inferior e organiza a esponja na parte superior. Pressione para dosar o sabão direto na esponja sem desperdício.",
         badge: "Mais Vendido",
         rating: 4.7,
         reviews: 63
@@ -365,8 +469,9 @@ let searchQuery = "";
 let sortBy = "default";
 let currentProduct = null;
 let modalQuantity = 1;
+let modalSelectedVariation = null; // Selected variation option in the product modal
 let currentPage = 1;
-const PRODUCTS_PER_PAGE = 10;
+const PRODUCTS_PER_PAGE = 12; // 12 fecha a grade em 4, 3 ou 2 colunas sem buracos
 
 // Dynamic Categories Arrays
 let CATEGORIES = [];
@@ -434,10 +539,6 @@ const qtyPlusBtn = document.getElementById("qty-plus");
 const qtyVal = document.getElementById("qty-val");
 const modalAddToCartBtn = document.getElementById("modal-add-to-cart-btn");
 
-const checkoutModal = document.getElementById("checkout-modal");
-const checkoutModalClose = document.getElementById("checkout-modal-close");
-const checkoutForm = document.getElementById("checkout-form");
-
 const contactForm = document.getElementById("contact-form");
 const formSuccessMsg = document.getElementById("form-success-msg");
 
@@ -461,11 +562,21 @@ async function init() {
         }
     }
     
+    // Load social links from store settings (footer/contact icons)
+    loadSocialLinks();
+
     // Load categories first
     await loadCategories();
     
     // Load products from Supabase
     await loadProducts();
+
+    // Deep-link: ?produto=ID abre o modal do produto direto
+    const urlParams = new URLSearchParams(window.location.search);
+    const deepLinkProductId = parseInt(urlParams.get("produto"));
+    if (!isNaN(deepLinkProductId)) {
+        openProductModal(deepLinkProductId);
+    }
 
     // Load header banners slider
     await loadBanners();
@@ -473,11 +584,31 @@ async function init() {
     // Initialize circular testimonials slider
     initTestimonialsSlider();
 
-    // Bind Event Listeners
-    bindEvents();
-    
-    // Update cart UI badge & contents
+    // Populate and bind UI
     updateCartUI();
+    bindEvents();
+
+    if (supabaseClient) {
+        // Listen to Auth state change for favorites sync
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            if (session && session.user) {
+                currentUser = session.user;
+                await loadUserFavorites();
+            } else {
+                currentUser = null;
+                userFavorites = [];
+            }
+            renderProducts();
+        });
+
+        // Initial check
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session && session.user) {
+            currentUser = session.user;
+            await loadUserFavorites();
+            renderProducts();
+        }
+    }
 }
 
 // Circular Testimonials Logic
@@ -711,6 +842,39 @@ function updateTestimonialsSlider() {
                 span.style.transform = "translateY(0px)";
             }, 20);
         });
+    }
+}
+
+// Load social media links configured in the admin (store_settings)
+async function loadSocialLinks() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from("store_settings")
+            .select("key, value")
+            .in("key", ["social_instagram", "social_facebook"]);
+
+        if (error) throw error;
+
+        const settings = {};
+        (data || []).forEach(item => { settings[item.key] = item.value; });
+
+        const applyLink = (elId, url) => {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            if (url && url.trim()) {
+                el.href = url.trim();
+                el.style.display = "";
+            } else {
+                el.style.display = "none"; // Esconde o ícone se não configurado
+            }
+        };
+
+        // Ícones do rodapé (coluna Atendimento)
+        applyLink("social-instagram-footer", settings["social_instagram"]);
+        applyLink("social-facebook-footer", settings["social_facebook"]);
+    } catch (e) {
+        console.warn("Não foi possível carregar os links sociais:", e.message);
     }
 }
 
@@ -1007,12 +1171,12 @@ async function loadProducts() {
         if (data && data.length > 0) {
             PRODUCTS = data;
         } else {
-            console.warn("Tabela 'products' vazia no Supabase. Usando catálogo local de demonstração.");
+            console.warn("Tabela 'products' vazia no Supabase. Usando catélogo local de demonstração.");
             PRODUCTS = FALLBACK_PRODUCTS;
         }
     } catch (err) {
         console.error("Falha ao se conectar com Supabase:", err.message);
-        console.warn("Carregando catálogo de demonstração offline.");
+        console.warn("Carregando catélogo de demonstração offline.");
         PRODUCTS = FALLBACK_PRODUCTS;
     }
     
@@ -1075,19 +1239,39 @@ function bindEvents() {
     cartOverlay.addEventListener("click", () => {
         closeCart();
         closeProductModal();
-        closeCheckoutModal();
     });
     cartContinueShopping.addEventListener("click", closeCart);
 
     // Checkout Trigger
     checkoutTriggerBtn.addEventListener("click", () => {
         closeCart();
-        openCheckoutModal();
+        window.location.href = "checkout.html";
     });
 
     // Modal Close handlers
     productModalClose.addEventListener("click", closeProductModal);
-    checkoutModalClose.addEventListener("click", closeCheckoutModal);
+
+    // Modal Favorite Click Handler
+    const modalFavBtn = document.getElementById("modal-favorite-btn");
+    if (modalFavBtn) {
+        modalFavBtn.addEventListener("click", () => {
+            if (currentProduct) {
+                toggleProductFavorite(currentProduct.id);
+            }
+        });
+    }
+
+    // Modal Share Click Handler: copia o link direto do produto
+    const modalShareBtn = document.getElementById("modal-share-btn");
+    if (modalShareBtn) {
+        modalShareBtn.addEventListener("click", () => {
+            if (!currentProduct) return;
+            const shareUrl = `${window.location.origin}${window.location.pathname}?produto=${currentProduct.id}`;
+            navigator.clipboard.writeText(shareUrl)
+                .then(() => alert("Link do produto copiado! Cole no WhatsApp ou Instagram para divulgar."))
+                .catch(() => alert("Não foi possível copiar o link: " + shareUrl));
+        });
+    }
 
     // Quantity selectors in Modal
     qtyMinusBtn.addEventListener("click", () => {
@@ -1105,20 +1289,15 @@ function bindEvents() {
     // Modal Add To Cart
     modalAddToCartBtn.addEventListener("click", () => {
         if (currentProduct) {
-            addToCart(currentProduct.id, modalQuantity);
+            // Produto com variações mas nenhuma disponível/selecionada
+            if (getProductVariations(currentProduct) && !modalSelectedVariation) {
+                alert("Este produto está esgotado no momento.");
+                return;
+            }
+            addToCart(currentProduct.id, modalQuantity, modalSelectedVariation);
             closeProductModal();
         }
     });
-
-    // Checkout Form Submit (WhatsApp redirect)
-    checkoutForm.addEventListener("submit", submitCheckout);
-
-    // Auto-fill customer details from phone number on blur/change
-    const checkoutPhone = document.getElementById("checkout-phone");
-    if (checkoutPhone) {
-        checkoutPhone.addEventListener("blur", handlePhoneBlur);
-        checkoutPhone.addEventListener("input", formatPhoneInput);
-    }
 
     // Contact Form Submit
     if (contactForm) {
@@ -1138,28 +1317,9 @@ function openCart() {
 
 function closeCart() {
     cartDrawer.classList.remove("open");
-    if (!productModal.classList.contains("open") && !checkoutModal.classList.contains("open")) {
+    if (!productModal.classList.contains("open")) {
         cartOverlay.classList.remove("open");
         document.body.style.overflow = "";
-    }
-}
-
-function openCheckoutModal() {
-    checkoutModal.classList.add("open");
-    cartOverlay.classList.add("open");
-    document.body.style.overflow = "hidden";
-}
-
-function closeCheckoutModal() {
-    checkoutModal.classList.remove("open");
-    cartOverlay.classList.remove("open");
-    document.body.style.overflow = "";
-    
-    // Clear phone search status message
-    const phoneStatus = document.getElementById("checkout-phone-status");
-    if (phoneStatus) {
-        phoneStatus.style.display = "none";
-        phoneStatus.textContent = "";
     }
 }
 
@@ -1178,16 +1338,22 @@ function updateCartUI() {
         checkoutTriggerBtn.disabled = false;
         
         // Append current cart items
-        cart.forEach(item => {
+        cart.forEach((item, index) => {
+            // Prefer the variation photo when the item has one
             const mediaList = getProductMedia(item.product.image);
-            const firstImg = mediaList[0] || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600';
-            
+            const firstImg = (item.variant && item.variant.image) || mediaList[0] || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600';
+            const unitPrice = getItemUnitPrice(item);
+            const variantHTML = item.variant
+                ? `<div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">${escapeHTML(item.variant.name)}: <strong>${escapeHTML(item.variant.label)}</strong></div>`
+                : "";
+
             const itemHTML = `
-                <div class="cart-item" data-id="${item.product.id}">
-                    <img src="${firstImg}" alt="${item.product.name}" class="cart-item-img">
+                <div class="cart-item" data-index="${index}">
+                    <img src="${safeMediaUrl(firstImg)}" alt="${escapeHTML(item.product.name)}" class="cart-item-img">
                     <div class="cart-item-details">
-                        <h4 class="cart-item-title">${item.product.name}</h4>
-                        <div class="cart-item-price">R$ ${item.product.price.toFixed(2).replace('.', ',')}</div>
+                        <h4 class="cart-item-title">${escapeHTML(item.product.name)}</h4>
+                        ${variantHTML}
+                        <div class="cart-item-price">R$ ${unitPrice.toFixed(2).replace('.', ',')}</div>
                         <div class="cart-item-controls">
                             <div class="cart-item-qty">
                                 <button class="cart-qty-btn cart-minus" aria-label="Diminuir quantidade"><i class="fa-solid fa-minus"></i></button>
@@ -1222,58 +1388,69 @@ function updateCartUI() {
 function bindCartItemButtons() {
     const items = cartItemsContainer.querySelectorAll(".cart-item");
     items.forEach(item => {
-        const id = parseInt(item.getAttribute("data-id"));
-        
+        const index = parseInt(item.getAttribute("data-index"));
+
         item.querySelector(".cart-minus").addEventListener("click", () => {
-            updateQuantity(id, -1);
+            updateQuantity(index, -1);
         });
-        
+
         item.querySelector(".cart-plus").addEventListener("click", () => {
-            updateQuantity(id, 1);
+            updateQuantity(index, 1);
         });
-        
+
         item.querySelector(".cart-item-remove").addEventListener("click", () => {
-            removeFromCart(id);
+            removeFromCart(index);
         });
     });
 }
 
-function addToCart(productId, qty = 1) {
+function addToCart(productId, qty = 1, variant = null) {
     const product = PRODUCTS.find(p => p.id === productId);
     if (!product) return;
-    
-    const existingItem = cart.find(item => item.product.id === productId);
-    
+
+    // Product has variations but none was chosen (e.g. quick-add from the card):
+    // open the modal so the customer picks one first.
+    if (!variant && getProductVariations(product)) {
+        openProductModal(productId);
+        return;
+    }
+
+    const existingItem = cart.find(item =>
+        item.product.id === productId &&
+        (item.variant ? item.variant.label : null) === (variant ? variant.label : null)
+    );
+
     if (existingItem) {
         existingItem.quantity += qty;
     } else {
         cart.push({
             product: product,
-            quantity: qty
+            quantity: qty,
+            variant: variant
         });
     }
-    
+
     saveCart();
     updateCartUI();
-    
+
     // Smooth transition: open cart drawer to show item added
     openCart();
 }
 
-function removeFromCart(productId) {
-    cart = cart.filter(item => item.product.id !== productId);
+function removeFromCart(index) {
+    cart.splice(index, 1);
     saveCart();
     updateCartUI();
 }
 
-function updateQuantity(productId, delta) {
-    const item = cart.find(item => item.product.id === productId);
+function updateQuantity(index, delta) {
+    const item = cart[index];
     if (!item) return;
-    
+
     item.quantity += delta;
-    
+
     if (item.quantity <= 0) {
-        removeFromCart(productId);
+        removeFromCart(index);
     } else {
         saveCart();
         updateCartUI();
@@ -1283,12 +1460,12 @@ function updateQuantity(productId, delta) {
 function calculateCartTotals() {
     let itemCount = 0;
     let subtotal = 0;
-    
+
     cart.forEach(item => {
         itemCount += item.quantity;
-        subtotal += item.product.price * item.quantity;
+        subtotal += getItemUnitPrice(item) * item.quantity;
     });
-    
+
     return { itemCount, subtotal };
 }
 
@@ -1314,6 +1491,48 @@ function getProductMedia(imageField) {
         }
     } catch (e) {
         return [imageField];
+    }
+}
+
+// Parse the product variations field (JSONB object or JSON string).
+// Returns { name, options: [{label, price, stock, image}] } or null.
+function getProductVariations(product) {
+    if (!product || !product.variations) return null;
+    let v = product.variations;
+    try {
+        if (typeof v === "string") v = JSON.parse(v);
+    } catch (e) {
+        return null;
+    }
+    if (!v || !Array.isArray(v.options) || v.options.length === 0) return null;
+    return v;
+}
+
+// Effective unit price of a cart item (variation price wins over base price)
+function getItemUnitPrice(item) {
+    if (item.variant && item.variant.price !== undefined && item.variant.price !== null) {
+        return parseFloat(item.variant.price);
+    }
+    return item.product.price;
+}
+
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+    }[char]));
+}
+
+function safeMediaUrl(value) {
+    const fallback = "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600";
+    try {
+        const parsed = new URL(String(value || ""), window.location.origin);
+        return ["http:", "https:"].includes(parsed.protocol) ? escapeHTML(parsed.href) : fallback;
+    } catch (e) {
+        return fallback;
     }
 }
 
@@ -1353,32 +1572,36 @@ function renderProducts() {
     }
     
     paginatedProducts.forEach(p => {
-        const badgeHTML = p.badge ? `<span class="product-badge">${p.badge}</span>` : "";
+        const productName = escapeHTML(p.name);
+        const productCategory = escapeHTML(String(p.category || "").replace("-", " "));
+        const productId = escapeHTML(p.id);
+        const badgeHTML = p.badge ? `<span class="product-badge">${escapeHTML(p.badge)}</span>` : "";
         const priceHTML = `R$ ${p.price.toFixed(2).replace('.', ',')}`;
         
         // Use first image of media list for catalog display thumbnail
         const mediaList = getProductMedia(p.image);
-        const firstMedia = mediaList[0] || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&q=80&w=600';
+        const firstMedia = safeMediaUrl(mediaList[0]);
         
+        const isFav = isProductFavorited(p.id);
+
         const cardHTML = `
-            <div class="product-card" data-id="${p.id}">
+            <div class="product-card" data-id="${productId}">
                 ${badgeHTML}
+                <button class="product-favorite-btn ${isFav ? 'active' : ''}" title="${isFav ? 'Remover dos favoritos' : 'Favoritar'}">
+                    <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                </button>
                 <div class="product-img-wrapper">
-                    <img src="${firstMedia}" alt="${p.name}" loading="lazy">
+                    <img src="${firstMedia}" alt="${productName}" loading="lazy">
                     <div class="product-actions-overlay">
                         <button class="btn-icon btn-view-details" title="Visualizar Detalhes"><i class="fa-solid fa-eye"></i></button>
                         <button class="btn-icon btn-quick-add" title="Adicionar ao Carrinho"><i class="fa-solid fa-cart-plus"></i></button>
                     </div>
                 </div>
                 <div class="product-info">
-                    <span class="product-cat">${p.category.replace('-', ' ')}</span>
-                    <h3 class="product-title">${p.name}</h3>
+                    <span class="product-cat">${productCategory}</span>
+                    <h3 class="product-title">${productName}</h3>
                     <div class="product-rating">
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
-                        <i class="fa-solid fa-star"></i>
+                        ${renderStars(p.rating || 5)}
                         <span>(${p.reviews || 0})</span>
                     </div>
                     <div class="product-price-action">
@@ -1481,6 +1704,15 @@ function bindProductCardEvents() {
             openProductModal(id);
         });
 
+        // Toggle favorite
+        const favBtn = card.querySelector(".product-favorite-btn");
+        if (favBtn) {
+            favBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                toggleProductFavorite(id);
+            });
+        }
+
         // Open details modal by clicking anywhere on the card (except action buttons)
         card.addEventListener("click", (e) => {
             if (!e.target.closest("button")) {
@@ -1503,6 +1735,15 @@ function openProductModal(productId) {
     modalProductName.textContent = product.name;
     modalProductPrice.textContent = `R$ ${product.price.toFixed(2).replace('.', ',')}`;
     modalProductDesc.textContent = product.description;
+    
+    // Dynamic stars & reviews for modal
+    const modalProductStars = document.getElementById("modal-product-stars");
+    if (modalProductStars) {
+        modalProductStars.innerHTML = `
+            ${renderStars(product.rating || 5)}
+            <span>(${product.reviews || 0} avaliações)</span>
+        `;
+    }
     
     // Media gallery setup
     const media = getProductMedia(product.image);
@@ -1559,15 +1800,130 @@ function openProductModal(productId) {
         });
     }
     
+    // Variation selector (color, kit, units...)
+    modalSelectedVariation = null;
+    const variationsBox = document.getElementById("modal-variations");
+    if (variationsBox) {
+        const varData = getProductVariations(product);
+        if (varData) {
+            variationsBox.style.display = "block";
+            renderModalVariations(varData);
+        } else {
+            variationsBox.style.display = "none";
+            variationsBox.innerHTML = "";
+        }
+    }
+
     productModal.classList.add("open");
     cartOverlay.classList.add("open");
     document.body.style.overflow = "hidden";
+
+    // Set favorite button visual state in details modal
+    updateModalFavoriteButton(productId);
+}
+
+// Render the variation option buttons inside the product modal
+function renderModalVariations(varData) {
+    const box = document.getElementById("modal-variations");
+    if (!box) return;
+
+    box.innerHTML = `
+        <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-dark); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+            ${escapeHTML(varData.name)}: <span id="modal-variation-selected" style="color: var(--accent-color);"></span>
+        </div>
+        <div id="modal-variation-options" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+    `;
+
+    const optionsWrap = box.querySelector("#modal-variation-options");
+    const selectedLabel = box.querySelector("#modal-variation-selected");
+
+    const selectOption = (opt, btn) => {
+        modalSelectedVariation = {
+            name: varData.name,
+            label: opt.label,
+            price: (opt.price !== undefined && opt.price !== null) ? parseFloat(opt.price) : null,
+            image: opt.image || null
+        };
+
+        // Visual state of the buttons
+        optionsWrap.querySelectorAll("button").forEach(b => {
+            b.style.borderColor = "var(--border-color)";
+            b.style.backgroundColor = "white";
+            b.style.fontWeight = "500";
+        });
+        btn.style.borderColor = "var(--accent-color)";
+        btn.style.backgroundColor = "rgba(43, 108, 176, 0.06)";
+        btn.style.fontWeight = "700";
+
+        if (selectedLabel) selectedLabel.textContent = opt.label;
+
+        // Update displayed price
+        if (modalSelectedVariation.price !== null && modalProductPrice) {
+            modalProductPrice.textContent = `R$ ${modalSelectedVariation.price.toFixed(2).replace('.', ',')}`;
+        }
+
+        // Swap main image if the option has its own photo
+        if (opt.image) {
+            const mainContainer = document.getElementById("gallery-main-container");
+            if (mainContainer) {
+                mainContainer.innerHTML = `<img src="${safeMediaUrl(opt.image)}" alt="${escapeHTML(opt.label)}" style="width:100%; height:100%; object-fit:cover;">`;
+            }
+        }
+    };
+
+    let firstAvailableSelected = false;
+
+    varData.options.forEach((opt) => {
+        const isOutOfStock = (typeof opt.stock === "number") && opt.stock <= 0;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.style.cssText = `
+            padding: 8px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background-color: white;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            transition: all 0.2s;
+        `;
+
+        if (isOutOfStock) {
+            btn.innerHTML = `${escapeHTML(opt.label)} <span style="font-size: 0.68rem; font-weight: 700; color: #E53E3E; text-transform: uppercase;">Esgotado</span>`;
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            btn.style.cursor = "not-allowed";
+            btn.style.textDecoration = "line-through";
+        } else {
+            btn.textContent = opt.label;
+            btn.addEventListener("click", () => selectOption(opt, btn));
+        }
+
+        optionsWrap.appendChild(btn);
+
+        // Pre-select the first AVAILABLE option
+        if (!isOutOfStock && !firstAvailableSelected) {
+            firstAvailableSelected = true;
+            selectOption(opt, btn);
+        }
+    });
+
+    // All options out of stock
+    if (!firstAvailableSelected) {
+        modalSelectedVariation = null;
+        if (selectedLabel) {
+            selectedLabel.textContent = "Esgotado";
+            selectedLabel.style.color = "#E53E3E";
+        }
+    }
 }
 
 // Close Modal
 function closeProductModal() {
     productModal.classList.remove("open");
-    if (!cartDrawer.classList.contains("open") && !checkoutModal.classList.contains("open")) {
+    if (!cartDrawer.classList.contains("open")) {
         cartOverlay.classList.remove("open");
         document.body.style.overflow = "";
     }
@@ -1590,171 +1946,101 @@ function submitContactForm(e) {
     }, 5000);
 }
 
-function submitCheckout(e) {
-    e.preventDefault();
-    
-    const clientName = document.getElementById("checkout-name").value.trim();
-    const clientPhone = document.getElementById("checkout-phone").value.trim();
-    const street = document.getElementById("checkout-street").value.trim();
-    const number = document.getElementById("checkout-number").value.trim();
-    const neighborhood = document.getElementById("checkout-neighborhood").value.trim();
-    const city = document.getElementById("checkout-city").value.trim();
-    const paymentMethod = document.getElementById("checkout-payment").value;
-    
-    if (!clientName || !clientPhone || !street || !number || !neighborhood || !city || !paymentMethod) {
-        alert("Por favor, preencha todos os campos obrigatórios.");
-        return;
-    }
-    
-    // 1. Format Cart Items list for the message
-    let itemsText = "";
-    let total = 0;
-    
-    cart.forEach(item => {
-        const itemSubtotal = item.product.price * item.quantity;
-        total += itemSubtotal;
-        itemsText += `• ${item.quantity}x ${item.product.name} (R$ ${item.product.price.toFixed(2).replace('.', ',')} c/u)\n`;
-    });
-    
-    // 2. Build full message text
-    const divider = "----------------------------------";
-    const textMsg = 
-`🛒 *Novo Pedido - RaviLar Utilidades*
+// (Fluxo antigo de checkout via WhatsApp removido — o checkout agora é feito
+//  na página checkout.html com pagamento integrado pela InfinitePay.)
 
-*Cliente:* ${clientName}
-*WhatsApp:* ${clientPhone}
-*Forma de Pagamento:* ${paymentMethod}
+// ==========================================================================
+// CLIENT FAVORITES FUNCTIONS
+// ==========================================================================
+let userFavorites = [];
 
-*Endereço de Entrega:*
-Rua/Av: ${street}, Nº ${number}
-Bairro: ${neighborhood}
-Cidade: ${city}
-
-${divider}
-*Itens do Pedido:*
-${itemsText}
-*Subtotal:* R$ ${total.toFixed(2).replace('.', ',')}
-*Taxa de entrega:* A combinar
-*Total:* R$ ${total.toFixed(2).replace('.', ',')}
-${divider}
-
-Olá RaviLar, gostaria de confirmar o pedido acima!`;
-
-    // 3. Save/update customer details in Supabase
-    saveCustomer(clientPhone, clientName, street, number, neighborhood, city);
-
-    // 4. Create WhatsApp URL and redirect
-    const encodedText = encodeURIComponent(textMsg);
-    const whatsappUrl = `https://api.whatsapp.com/send?phone=${SHOP_WHATSAPP_NUMBER}&text=${encodedText}`;
-    
-    // Open in a new tab/app window
-    window.open(whatsappUrl, "_blank");
-    
-    // 5. Reset Cart
-    cart = [];
-    saveCart();
-    updateCartUI();
-    
-    // Close modals
-    closeCheckoutModal();
-    checkoutForm.reset();
-    
-    alert("Pedido enviado! Você será redirecionado para o WhatsApp da RaviLar para finalizar o pagamento e combinar a entrega.");
-}
-
-// Phone number formatting in real time (XX) XXXXX-XXXX
-function formatPhoneInput(e) {
-    let value = e.target.value.replace(/\D/g, "");
-    if (value.length > 11) value = value.slice(0, 11);
-    
-    if (value.length > 10) {
-        e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
-    } else if (value.length > 6) {
-        e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 6)}-${value.slice(6)}`;
-    } else if (value.length > 2) {
-        e.target.value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
-    } else if (value.length > 0) {
-        e.target.value = `(${value}`;
-    }
-}
-
-// Check database for existing customer on blur
-async function handlePhoneBlur(e) {
-    const phone = e.target.value.replace(/\D/g, "");
-    const phoneStatus = document.getElementById("checkout-phone-status");
-    if (phone.length < 10) {
-        if (phoneStatus) {
-            phoneStatus.style.display = "none";
-        }
-        return;
-    }
-    
-    if (!supabaseClient) return;
-    
+async function loadUserFavorites() {
+    if (!supabaseClient || !currentUser) return;
     try {
-        if (phoneStatus) {
-            phoneStatus.style.color = "var(--text-muted)";
-            phoneStatus.style.display = "block";
-            phoneStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando cadastro...';
-        }
-        
         const { data, error } = await supabaseClient
-            .from("customers")
-            .select("*")
-            .eq("phone", phone)
-            .maybeSingle();
-            
-        if (error) {
-            console.error("Erro ao buscar dados do cliente:", error.message);
-            if (phoneStatus) phoneStatus.style.display = "none";
-            return;
-        }
+            .from("favorites")
+            .select("product_id")
+            .eq("user_id", currentUser.id);
         
-        if (data) {
-            // Auto fill checkout fields
-            document.getElementById("checkout-name").value = data.name || "";
-            document.getElementById("checkout-street").value = data.street || "";
-            document.getElementById("checkout-number").value = data.number || "";
-            document.getElementById("checkout-neighborhood").value = data.neighborhood || "";
-            document.getElementById("checkout-city").value = data.city || "";
-            
-            if (phoneStatus) {
-                phoneStatus.style.color = "var(--success-color)";
-                phoneStatus.innerHTML = `<i class="fa-solid fa-circle-check"></i> Cadastro de <strong>${data.name.split(' ')[0]}</strong> encontrado e preenchido!`;
-            }
-        } else {
-            if (phoneStatus) {
-                phoneStatus.style.display = "none";
-            }
-        }
-    } catch (err) {
-        console.error("Erro na busca de cliente:", err);
-        if (phoneStatus) phoneStatus.style.display = "none";
+        if (error) throw error;
+        userFavorites = data ? data.map(f => Number(f.product_id)) : [];
+    } catch (e) {
+        console.error("Erro ao carregar favoritos:", e);
     }
 }
 
-// Save/Update customer details in Supabase
-async function saveCustomer(phone, name, street, number, neighborhood, city) {
+function isProductFavorited(productId) {
+    return userFavorites.includes(Number(productId));
+}
+
+async function toggleProductFavorite(productId) {
     if (!supabaseClient) return;
-    const cleanPhone = phone.replace(/\D/g, "");
-    try {
-        const { error } = await supabaseClient
-            .from("customers")
-            .upsert({
-                phone: cleanPhone,
-                name: name,
-                street: street,
-                number: number,
-                neighborhood: neighborhood,
-                city: city
-            }, { onConflict: 'phone' });
-            
-        if (error) {
-            console.error("Erro ao salvar cliente no banco:", error.message);
-        }
-    } catch (err) {
-        console.error("Erro na requisição de cadastro do cliente:", err);
+    if (!currentUser) {
+        alert("Por favor, faça login para favoritar produtos!");
+        window.location.href = "cliente.html";
+        return;
     }
+
+    const prodId = Number(productId);
+    const isFav = isProductFavorited(prodId);
+
+    try {
+        if (isFav) {
+            // Remove
+            const { error } = await supabaseClient
+                .from("favorites")
+                .delete()
+                .eq("user_id", currentUser.id)
+                .eq("product_id", prodId);
+            if (error) throw error;
+            userFavorites = userFavorites.filter(id => id !== prodId);
+        } else {
+            // Add
+            const { error } = await supabaseClient
+                .from("favorites")
+                .insert({
+                    user_id: currentUser.id,
+                    product_id: prodId
+                });
+            if (error) throw error;
+            userFavorites.push(prodId);
+        }
+        
+        // Re-render
+        renderProducts();
+        updateModalFavoriteButton(prodId);
+    } catch (e) {
+        console.error("Erro ao alternar favorito:", e);
+    }
+}
+
+function updateModalFavoriteButton(productId) {
+    const modalFavBtn = document.getElementById("modal-favorite-btn");
+    if (modalFavBtn && currentProduct && currentProduct.id == productId) {
+        const isFav = isProductFavorited(productId);
+        if (isFav) {
+            modalFavBtn.classList.add("active");
+            modalFavBtn.innerHTML = `<i class="fa-solid fa-heart"></i>`;
+        } else {
+            modalFavBtn.classList.remove("active");
+            modalFavBtn.innerHTML = `<i class="fa-regular fa-heart"></i>`;
+        }
+    }
+}
+
+function renderStars(rating) {
+    const r = Math.round((rating || 5) * 2) / 2;
+    let html = "";
+    for (let i = 1; i <= 5; i++) {
+        if (i <= r) {
+            html += `<i class="fa-solid fa-star"></i>`;
+        } else if (i - 0.5 === r) {
+            html += `<i class="fa-solid fa-star-half-stroke"></i>`;
+        } else {
+            html += `<i class="fa-regular fa-star"></i>`;
+        }
+    }
+    return html;
 }
 
 // Start Application on Load

@@ -23,8 +23,31 @@ CREATE TABLE IF NOT EXISTS public.products (
     description TEXT NOT NULL,
     badge TEXT,
     rating NUMERIC DEFAULT 5.0,
-    reviews BIGINT DEFAULT 0
+    reviews BIGINT DEFAULT 0,
+    variations JSONB -- Ex: {"name": "Cor", "options": [{"label": "Azul", "price": 30.20, "stock": 1, "image": "url"}]}
 );
+
+-- Garantir coluna de variações em bancos existentes
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS variations JSONB;
+
+-- Coluna e trigger de "última edição" (usada para ordenar o admin)
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+
+CREATE OR REPLACE FUNCTION public.set_products_updated_at()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_products_updated_at ON public.products;
+CREATE TRIGGER trg_products_updated_at
+BEFORE UPDATE ON public.products
+FOR EACH ROW
+EXECUTE FUNCTION public.set_products_updated_at();
 
 -- 3. Criar a tabela de banners/slides caso ela não exista
 CREATE TABLE IF NOT EXISTS public.banners (
@@ -51,6 +74,15 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.banners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
+-- Helper central para ações administrativas.
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT auth.email() = 'ravilarutilidades@gmail.com';
+$$;
+
 -- 6. Remover políticas antigas se já existirem
 DROP POLICY IF EXISTS "Permitir leitura pública" ON public.categories;
 DROP POLICY IF EXISTS "Permitir inserção pública" ON public.categories;
@@ -72,29 +104,44 @@ DROP POLICY IF EXISTS "Permitir inserção pública" ON public.reviews;
 DROP POLICY IF EXISTS "Permitir atualização pública" ON public.reviews;
 DROP POLICY IF EXISTS "Permitir exclusão pública" ON public.reviews;
 
+DO $$
+DECLARE
+    policy_row RECORD;
+BEGIN
+    FOR policy_row IN
+        SELECT schemaname, tablename, policyname
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename IN ('categories', 'products', 'banners', 'reviews')
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', policy_row.policyname, policy_row.schemaname, policy_row.tablename);
+    END LOOP;
+END;
+$$;
+
 -- 7. Criar políticas para tabela de categorias
 CREATE POLICY "Permitir leitura pública" ON public.categories FOR SELECT USING (true);
-CREATE POLICY "Permitir inserção pública" ON public.categories FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir atualização pública" ON public.categories FOR UPDATE USING (true);
-CREATE POLICY "Permitir exclusão pública" ON public.categories FOR DELETE USING (true);
+CREATE POLICY "Permitir inserção admin" ON public.categories FOR INSERT WITH CHECK (public.is_admin());
+CREATE POLICY "Permitir atualização admin" ON public.categories FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Permitir exclusão admin" ON public.categories FOR DELETE USING (public.is_admin());
 
 -- 8. Criar políticas para tabela de produtos
 CREATE POLICY "Permitir leitura pública" ON public.products FOR SELECT USING (true);
-CREATE POLICY "Permitir inserção pública" ON public.products FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir atualização pública" ON public.products FOR UPDATE USING (true);
-CREATE POLICY "Permitir exclusão pública" ON public.products FOR DELETE USING (true);
+CREATE POLICY "Permitir inserção admin" ON public.products FOR INSERT WITH CHECK (public.is_admin());
+CREATE POLICY "Permitir atualização admin" ON public.products FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Permitir exclusão admin" ON public.products FOR DELETE USING (public.is_admin());
 
 -- 9. Criar políticas para tabela de banners
 CREATE POLICY "Permitir leitura pública" ON public.banners FOR SELECT USING (true);
-CREATE POLICY "Permitir inserção pública" ON public.banners FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir atualização pública" ON public.banners FOR UPDATE USING (true);
-CREATE POLICY "Permitir exclusão pública" ON public.banners FOR DELETE USING (true);
+CREATE POLICY "Permitir inserção admin" ON public.banners FOR INSERT WITH CHECK (public.is_admin());
+CREATE POLICY "Permitir atualização admin" ON public.banners FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Permitir exclusão admin" ON public.banners FOR DELETE USING (public.is_admin());
 
 -- 10. Criar políticas para tabela de avaliações
 CREATE POLICY "Permitir leitura pública" ON public.reviews FOR SELECT USING (true);
-CREATE POLICY "Permitir inserção pública" ON public.reviews FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir atualização pública" ON public.reviews FOR UPDATE USING (true);
-CREATE POLICY "Permitir exclusão pública" ON public.reviews FOR DELETE USING (true);
+CREATE POLICY "Permitir inserção admin" ON public.reviews FOR INSERT WITH CHECK (public.is_admin());
+CREATE POLICY "Permitir atualização admin" ON public.reviews FOR UPDATE USING (public.is_admin()) WITH CHECK (public.is_admin());
+CREATE POLICY "Permitir exclusão admin" ON public.reviews FOR DELETE USING (public.is_admin());
 
 -- 11. CONFIGURAR SUPABASE STORAGE PARA UPLOAD DE IMAGENS E VÍDEOS
 INSERT INTO storage.buckets (id, name, public)
@@ -106,10 +153,26 @@ DROP POLICY IF EXISTS "Permitir upload de mídia" ON storage.objects;
 DROP POLICY IF EXISTS "Permitir atualização de mídia" ON storage.objects;
 DROP POLICY IF EXISTS "Permitir exclusão de mídia" ON storage.objects;
 
+DO $$
+DECLARE
+    policy_row RECORD;
+BEGIN
+    FOR policy_row IN
+        SELECT schemaname, tablename, policyname
+        FROM pg_policies
+        WHERE schemaname = 'storage'
+          AND tablename = 'objects'
+          AND policyname ILIKE '%mídia%'
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON storage.objects', policy_row.policyname);
+    END LOOP;
+END;
+$$;
+
 CREATE POLICY "Permitir leitura pública de mídia" ON storage.objects FOR SELECT USING (bucket_id = 'product-media');
-CREATE POLICY "Permitir upload de mídia" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'product-media');
-CREATE POLICY "Permitir atualização de mídia" ON storage.objects FOR UPDATE USING (bucket_id = 'product-media');
-CREATE POLICY "Permitir exclusão de mídia" ON storage.objects FOR DELETE USING (bucket_id = 'product-media');
+CREATE POLICY "Permitir upload admin de mídia" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'product-media' AND public.is_admin());
+CREATE POLICY "Permitir atualização admin de mídia" ON storage.objects FOR UPDATE USING (bucket_id = 'product-media' AND public.is_admin()) WITH CHECK (bucket_id = 'product-media' AND public.is_admin());
+CREATE POLICY "Permitir exclusão admin de mídia" ON storage.objects FOR DELETE USING (bucket_id = 'product-media' AND public.is_admin());
 
 -- 12. Limpar tabelas antes de carregar dados iniciais
 TRUNCATE TABLE public.categories CASCADE;
@@ -176,6 +239,7 @@ CREATE TABLE IF NOT EXISTS public.customers (
     id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
     phone TEXT NOT NULL UNIQUE,
+    email TEXT,
     name TEXT NOT NULL,
     street TEXT NOT NULL,
     number TEXT NOT NULL,
@@ -192,9 +256,33 @@ DROP POLICY IF EXISTS "Permitir inserção pública" ON public.customers;
 DROP POLICY IF EXISTS "Permitir atualização pública" ON public.customers;
 DROP POLICY IF EXISTS "Permitir exclusão pública" ON public.customers;
 
--- Criar políticas públicas para clientes
-CREATE POLICY "Permitir leitura pública" ON public.customers FOR SELECT USING (true);
-CREATE POLICY "Permitir inserção pública" ON public.customers FOR INSERT WITH CHECK (true);
-CREATE POLICY "Permitir atualização pública" ON public.customers FOR UPDATE USING (true);
-CREATE POLICY "Permitir exclusão pública" ON public.customers FOR DELETE USING (true);
+DO $$
+DECLARE
+    policy_row RECORD;
+BEGIN
+    FOR policy_row IN
+        SELECT schemaname, tablename, policyname
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename = 'customers'
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', policy_row.policyname, policy_row.schemaname, policy_row.tablename);
+    END LOOP;
+END;
+$$;
+
+-- Criar políticas para clientes: checkout/cadastro público, leitura e atualização do próprio usuário ou admin.
+CREATE POLICY "Permitir leitura admin ou próprio" ON public.customers FOR SELECT USING (
+    public.is_admin() 
+    OR phone = regexp_replace(coalesce(auth.jwt() -> 'user_metadata' ->> 'phone', auth.jwt() ->> 'phone'), '\D', '', 'g')
+);
+CREATE POLICY "Permitir inserção checkout" ON public.customers FOR INSERT WITH CHECK (true);
+CREATE POLICY "Permitir atualização admin ou próprio" ON public.customers FOR UPDATE USING (
+    public.is_admin()
+    OR phone = regexp_replace(coalesce(auth.jwt() -> 'user_metadata' ->> 'phone', auth.jwt() ->> 'phone'), '\D', '', 'g')
+) WITH CHECK (
+    public.is_admin()
+    OR phone = regexp_replace(coalesce(auth.jwt() -> 'user_metadata' ->> 'phone', auth.jwt() ->> 'phone'), '\D', '', 'g')
+);
+CREATE POLICY "Permitir exclusão admin" ON public.customers FOR DELETE USING (public.is_admin());
 
