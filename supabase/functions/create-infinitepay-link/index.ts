@@ -48,11 +48,17 @@ serve(async (req) => {
     if (webhook_url) payload.webhook_url = webhook_url;
 
     if (customer) {
-      payload.customer = {
-        name: customer.name,
-        email: customer.email,
-        phone_number: customer.phone_number,
-      };
+      // Enviar apenas os campos preenchidos — a InfinitePay rejeita
+      // campos presentes porém vazios (ex: convidado sem e-mail)
+      const cust: Record<string, string> = {};
+      if (customer.name && String(customer.name).trim()) cust.name = customer.name;
+      if (customer.email && String(customer.email).trim()) cust.email = customer.email;
+      if (customer.phone_number && String(customer.phone_number).replace(/\D/g, "").length > 4) {
+        cust.phone_number = customer.phone_number;
+      }
+      if (Object.keys(cust).length > 0) {
+        payload.customer = cust;
+      }
     }
 
     if (address) {
