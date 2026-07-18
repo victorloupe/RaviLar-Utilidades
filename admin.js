@@ -226,7 +226,7 @@ function safeMediaUrl(value) {
 async function init() {
     if (!supabaseClient) {
         showToast("Erro: Cliente Supabase não carregado. Verifique a conexão com a internet.", "error");
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--error-color); padding: 30px;">Falha ao inicializar o Supabase. Verifique suas credenciais.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--error-color); padding: 30px;">Falha ao inicializar o Supabase. Verifique suas credenciais.</td></tr>`;
         return;
     }
 
@@ -252,6 +252,285 @@ async function loadAllDashboardData() {
     await loadCoupons();
     updateStats();
     initFlyerGenerator();
+    initPostGenerator();
+}
+
+// ==========================================================================
+// GERADOR DE PUBLICAÇÕES PARA REDES SOCIAIS (aba Marketing > Publicações)
+// ==========================================================================
+
+function initPostGenerator() {
+    const productSelect = document.getElementById("post-product-select");
+    if (!productSelect) return;
+
+    populatePostProductSelect();
+
+    productSelect.addEventListener("change", () => {
+        populatePostImageSelect();
+        updatePostProductLink();
+        renderPostPreview();
+    });
+
+    // Copiar link direto do produto
+    const btnCopyLink = document.getElementById("btn-copy-product-link");
+    if (btnCopyLink) {
+        btnCopyLink.addEventListener("click", () => {
+            const linkInput = document.getElementById("post-product-link");
+            if (!linkInput || !linkInput.value) return;
+            navigator.clipboard.writeText(linkInput.value)
+                .then(() => showToast("Link do produto copiado! Cole na legenda ou na bio.", "success"))
+                .catch(() => showToast("Não foi possível copiar. Link: " + linkInput.value, "error"));
+        });
+    }
+
+    ["post-image-select", "post-format", "post-show-price", "post-template"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("change", renderPostPreview);
+    });
+    ["post-headline", "post-cta"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", renderPostPreview);
+    });
+
+    const btnDownload = document.getElementById("btn-download-post");
+    if (btnDownload) {
+        btnDownload.addEventListener("click", downloadPostImage);
+    }
+
+    renderPostPreview();
+}
+
+function populatePostProductSelect() {
+    const select = document.getElementById("post-product-select");
+    if (!select) return;
+
+    const currentVal = select.value;
+    select.innerHTML = '<option value="" disabled selected>Escolha o produto</option>';
+    [...adminProducts]
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${escapeHTML(p.name)}</option>`;
+        });
+
+    if (currentVal) select.value = currentVal;
+    populatePostImageSelect();
+}
+
+// Mostra o link direto do produto selecionado (?produto=ID)
+function updatePostProductLink() {
+    const productSelect = document.getElementById("post-product-select");
+    const row = document.getElementById("post-product-link-row");
+    const linkInput = document.getElementById("post-product-link");
+    if (!row || !linkInput) return;
+
+    const product = adminProducts.find(p => p.id == productSelect?.value);
+    if (product) {
+        linkInput.value = `https://ravilarutilidades.com.br/?produto=${product.id}`;
+        row.style.display = "flex";
+    } else {
+        row.style.display = "none";
+    }
+}
+
+function populatePostImageSelect() {
+    const productSelect = document.getElementById("post-product-select");
+    const imageSelect = document.getElementById("post-image-select");
+    if (!productSelect || !imageSelect) return;
+
+    imageSelect.innerHTML = "";
+    const product = adminProducts.find(p => p.id == productSelect.value);
+    if (!product) {
+        imageSelect.innerHTML = '<option value="">Escolha um produto primeiro</option>';
+        return;
+    }
+
+    const media = getProductMedia(product.image).filter(u => u && !u.toLowerCase().endsWith(".mp4"));
+    media.forEach((url, i) => {
+        imageSelect.innerHTML += `<option value="${escapeHTML(url)}">Foto ${i + 1}</option>`;
+    });
+
+    // Fotos das variações também podem ser usadas
+    const varData = parseVariationsField(product.variations);
+    if (varData) {
+        varData.options.forEach(opt => {
+            if (opt.image) {
+                imageSelect.innerHTML += `<option value="${escapeHTML(opt.image)}">${escapeHTML(varData.name)}: ${escapeHTML(opt.label)}</option>`;
+            }
+        });
+    }
+
+    if (imageSelect.options.length === 0) {
+        imageSelect.innerHTML = '<option value="">Produto sem fotos</option>';
+    }
+}
+
+function renderPostPreview() {
+    const canvas = document.getElementById("post-canvas");
+    const productSelect = document.getElementById("post-product-select");
+    if (!canvas || !productSelect) return;
+
+    const product = adminProducts.find(p => p.id == productSelect.value);
+    if (!product) {
+        canvas.innerHTML = `
+            <div style="width: 540px; height: 540px; display: flex; align-items: center; justify-content: center; background: #ffffff; border-radius: 8px; color: var(--text-muted); text-align: center; padding: 30px; box-sizing: border-box;">
+                Escolha um produto ao lado para gerar a arte.
+            </div>
+        `;
+        return;
+    }
+
+    const format = document.getElementById("post-format")?.value || "feed";
+    const showPrice = document.getElementById("post-show-price")?.checked !== false;
+    const headline = document.getElementById("post-headline")?.value.trim() || "OFERTA";
+    const cta = document.getElementById("post-cta")?.value.trim() || "Peça pelo site ou WhatsApp!";
+    const imageUrl = document.getElementById("post-image-select")?.value || getProductMedia(product.image)[0] || "";
+
+    const template = document.getElementById("post-template")?.value || "navy";
+    const isStory = format === "story";
+    const W = 540;
+    const H = isStory ? 960 : 540;
+
+    const priceParts = product.price.toFixed(2).split(".");
+
+    // Handles das redes (config da loja)
+    const handleFromUrl = (url) => {
+        try {
+            const u = new URL(url);
+            const parts = u.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+            return parts.length > 0 ? "@" + parts[parts.length - 1] : u.hostname;
+        } catch (e) { return ""; }
+    };
+    const instaHandle = storeSettings["social_instagram"] ? handleFromUrl(storeSettings["social_instagram"]) : "";
+
+    // Paletas dos 3 modelos de arte
+    const palettes = {
+        navy: {
+            bg: "linear-gradient(160deg, #1A365D 0%, #0f2340 100%)",
+            circle: "rgba(212,167,92,0.13)",
+            logoPill: "background: #ffffff; border-radius: 12px; padding: 8px 14px;",
+            headlineCss: "background: linear-gradient(135deg, #D4A75C, #b98a3e); color: #ffffff;",
+            cardShadow: "0 14px 40px rgba(0,0,0,0.35)",
+            nameColor: "#ffffff",
+            priceCss: "background: linear-gradient(135deg, #D4A75C, #b98a3e); color: #ffffff; box-shadow: 0 6px 18px rgba(185,138,62,0.45);",
+            footerCss: "background: rgba(255,255,255,0.08); border-top: 2px solid rgba(212,167,92,0.6);",
+            ctaColor: "#D4A75C",
+            footerTextColor: "rgba(255,255,255,0.85)"
+        },
+        light: {
+            bg: "linear-gradient(160deg, #FDFBF7 0%, #F3ECE0 100%)",
+            circle: "rgba(26,54,93,0.06)",
+            logoPill: "padding: 4px 0;",
+            headlineCss: "background: #1A365D; color: #ffffff;",
+            cardShadow: "0 12px 34px rgba(26,54,93,0.18)",
+            nameColor: "#1A365D",
+            priceCss: "background: #1A365D; color: #ffffff; box-shadow: 0 6px 18px rgba(26,54,93,0.3);",
+            footerCss: "background: rgba(26,54,93,0.05); border-top: 2px solid #D4A75C;",
+            ctaColor: "#B7791F",
+            footerTextColor: "#4a5568"
+        },
+        gold: {
+            bg: "linear-gradient(160deg, #D4A75C 0%, #b98a3e 100%)",
+            circle: "rgba(255,255,255,0.14)",
+            logoPill: "background: #ffffff; border-radius: 12px; padding: 8px 14px;",
+            headlineCss: "background: #1A365D; color: #ffffff;",
+            cardShadow: "0 14px 40px rgba(90,60,15,0.4)",
+            nameColor: "#ffffff",
+            priceCss: "background: #ffffff; color: #1A365D; box-shadow: 0 6px 18px rgba(90,60,15,0.35);",
+            footerCss: "background: rgba(15,35,64,0.22); border-top: 2px solid rgba(255,255,255,0.55);",
+            ctaColor: "#ffffff",
+            footerTextColor: "rgba(255,255,255,0.9)"
+        }
+    };
+    const pal = palettes[template] || palettes.navy;
+
+    canvas.innerHTML = `
+        <div id="post-art" style="width: ${W}px; height: ${H}px; position: relative; overflow: hidden; background: ${pal.bg}; font-family: 'Montserrat', 'Inter', sans-serif; display: flex; flex-direction: column; box-sizing: border-box;">
+            <!-- Círculos decorativos -->
+            <div style="position: absolute; right: -80px; top: -80px; width: 240px; height: 240px; border-radius: 50%; background: ${pal.circle};"></div>
+            <div style="position: absolute; left: -60px; bottom: ${isStory ? '120px' : '60px'}; width: 180px; height: 180px; border-radius: 50%; background: ${pal.circle};"></div>
+
+            <!-- Topo: logo + chamada -->
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: ${isStory ? '34px 30px 10px' : '24px 26px 8px'}; position: relative; z-index: 2;">
+                <div style="${pal.logoPill} line-height: 0;">
+                    <img src="LogoSite.png" style="height: ${isStory ? '46px' : '38px'}; width: auto;">
+                </div>
+                <div style="${pal.headlineCss} font-weight: 800; font-size: ${isStory ? '1rem' : '0.85rem'}; padding: ${isStory ? '10px 20px' : '8px 16px'}; border-radius: 9999px; letter-spacing: 1px; text-transform: uppercase;">${escapeHTML(headline)}</div>
+            </div>
+
+            <!-- Foto do produto -->
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: ${isStory ? '20px 45px' : '14px 60px'}; position: relative; z-index: 2; min-height: 0;">
+                <div style="background: #ffffff; border-radius: 20px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: ${pal.cardShadow}; padding: 14px; box-sizing: border-box;">
+                    ${imageUrl ? `<img src="${safeMediaUrl(imageUrl)}" style="max-width: 100%; max-height: 100%; object-fit: contain;">` : `<span style="color:#A0AEC0;">Sem foto</span>`}
+                </div>
+            </div>
+
+            <!-- Nome + preço -->
+            <div style="text-align: center; padding: ${isStory ? '18px 40px' : '12px 36px'}; position: relative; z-index: 2;">
+                <div style="color: ${pal.nameColor}; font-weight: 800; font-size: ${isStory ? '1.5rem' : '1.15rem'}; line-height: 1.25;">${escapeHTML(product.name)}</div>
+                ${showPrice && product.old_price && parseFloat(product.old_price) > product.price ? `
+                <div style="color: ${pal.nameColor}; opacity: 0.75; font-weight: 700; font-size: ${isStory ? '1.05rem' : '0.85rem'}; margin-top: ${isStory ? '10px' : '6px'};">De <s>R$ ${parseFloat(product.old_price).toFixed(2).replace('.', ',')}</s> por:</div>` : ""}
+                ${showPrice ? `
+                <div style="margin-top: ${isStory ? '16px' : '10px'}; display: inline-flex; align-items: baseline; gap: 4px; ${pal.priceCss} border-radius: 14px; padding: ${isStory ? '10px 28px' : '8px 22px'};">
+                    <span style="font-weight: 700; font-size: ${isStory ? '1.1rem' : '0.95rem'};">R$</span>
+                    <span style="font-weight: 900; font-size: ${isStory ? '3rem' : '2.3rem'}; line-height: 1;">${priceParts[0]}</span>
+                    <span style="font-weight: 800; font-size: ${isStory ? '1.4rem' : '1.1rem'};">,${priceParts[1]}</span>
+                </div>` : ""}
+            </div>
+
+            <!-- Rodapé -->
+            <div style="${pal.footerCss} padding: ${isStory ? '18px 30px 26px' : '12px 26px 16px'}; text-align: center; position: relative; z-index: 2;">
+                <div style="color: ${pal.ctaColor}; font-weight: 800; font-size: ${isStory ? '1.05rem' : '0.85rem'};">${escapeHTML(cta)}</div>
+                <div style="color: ${pal.footerTextColor}; font-weight: 600; font-size: ${isStory ? '0.85rem' : '0.7rem'}; margin-top: 5px;">
+                    ravilarutilidades.com.br &nbsp;•&nbsp; (17) 99637-1743${instaHandle ? ` &nbsp;•&nbsp; ${escapeHTML(instaHandle)}` : ""}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function downloadPostImage() {
+    const productSelect = document.getElementById("post-product-select");
+    const product = adminProducts.find(p => p.id == productSelect?.value);
+    if (!product) {
+        showToast("Escolha um produto para gerar a publicação.", "error");
+        return;
+    }
+    if (typeof html2canvas === "undefined") {
+        showToast("Gerador de imagem não carregou. Recarregue a página.", "error");
+        return;
+    }
+
+    const btn = document.getElementById("btn-download-post");
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando...';
+    btn.disabled = true;
+
+    try {
+        const art = document.getElementById("post-art");
+        const canvas = await html2canvas(art, {
+            scale: 2, // 540 -> 1080
+            useCORS: true,
+            backgroundColor: null,
+            logging: false
+        });
+
+        const format = document.getElementById("post-format")?.value || "feed";
+        const template = document.getElementById("post-template")?.value || "navy";
+        const slug = product.name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+
+        const link = document.createElement("a");
+        link.download = `post_${format}_${template}_${slug}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+
+        showToast("Publicação gerada com sucesso!", "success");
+    } catch (err) {
+        console.error("Erro ao gerar publicação:", err);
+        showToast("Erro ao gerar a imagem. A foto escolhida pode estar bloqueando a exportação — tente outra foto.", "error");
+    } finally {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+    }
 }
 
 // Bind Tab navigation click events
@@ -283,6 +562,11 @@ function bindTabEvents() {
                     // Load coupons when switching to coupons tab
                     if (targetTab === "cupons") {
                         loadCoupons();
+                    }
+                    // Refresh post generator when switching to publicacoes tab
+                    if (targetTab === "publicacoes") {
+                        populatePostProductSelect();
+                        renderPostPreview();
                     }
                 } else {
                     content.classList.remove("active");
@@ -683,7 +967,7 @@ async function loadProducts() {
         populateReviewProductSelect(); // Populate the reviews product dropdown dynamically
     } catch (err) {
         showToast("Erro ao carregar catálogo: " + err.message, "error");
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--error-color); padding: 30px;">Erro ao carregar dados. Garanta que executou o script SQL no Supabase.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--error-color); padding: 30px;">Erro ao carregar dados. Garanta que executou o script SQL no Supabase.</td></tr>`;
     }
 }
 
@@ -698,7 +982,7 @@ function renderTable() {
     );
 
     if (filtered.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhum produto cadastrado.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Nenhum produto cadastrado.</td></tr>`;
         tablePagination.innerHTML = "";
         return;
     }
@@ -718,7 +1002,7 @@ function renderTable() {
     pageProducts.forEach(p => {
         const productName = escapeHTML(p.name);
         const badgeHTML = p.badge ? `<span class="admin-badge badge-promo">${escapeHTML(p.badge)}</span>` : `<span style="color: var(--text-muted); font-size: 0.8rem;">-</span>`;
-        const priceFormatted = `R$ ${p.price.toFixed(2).replace('.', ',')}`;
+        const priceFormatted = `R$&nbsp;${p.price.toFixed(2).replace('.', ',')}`;
 
         // Get first image for thumbnail display in table
         const media = getProductMedia(p.image);
@@ -728,12 +1012,21 @@ function renderTable() {
         const catObj = adminCategories.find(c => c.slug === p.category);
         const categoryName = escapeHTML(catObj ? catObj.name : p.category);
 
+        // Stock: soma das variações (produto sem variação não controla estoque)
+        const varData = parseVariationsField(p.variations);
+        let stockHTML = `<span style="color: var(--text-muted);">—</span>`;
+        if (varData) {
+            const totalStock = varData.options.reduce((acc, o) => acc + (typeof o.stock === "number" ? o.stock : 0), 0);
+            stockHTML = `<strong style="color: ${totalStock > 0 ? 'var(--text-dark)' : '#E53E3E'};">${totalStock}</strong>`;
+        }
+
         const trHTML = `
             <tr data-id="${escapeHTML(p.id)}">
                 <td><img src="${thumbnail}" alt="${productName}" class="admin-table-img"></td>
                 <td style="font-weight: 600; color: var(--primary-color);">${productName}</td>
                 <td><span class="admin-badge badge-category">${categoryName}</span></td>
-                <td style="font-weight: 700;">${priceFormatted}</td>
+                <td style="font-weight: 700; white-space: nowrap;">${priceFormatted}</td>
+                <td style="text-align: center;">${stockHTML}</td>
                 <td>${badgeHTML}</td>
                 <td>
                     <div class="admin-actions">
@@ -744,11 +1037,147 @@ function renderTable() {
             </tr>
         `;
         tableBody.insertAdjacentHTML("beforeend", trHTML);
+
+        // Sub-linhas: uma por variação (foto própria, preço e estoque)
+        if (varData) {
+            varData.options.forEach(opt => {
+                const optPrice = (opt.price !== undefined && opt.price !== null) ? parseFloat(opt.price) : p.price;
+                const optStock = (typeof opt.stock === "number") ? opt.stock : 0;
+                const optThumb = opt.image
+                    ? `<img src="${safeMediaUrl(opt.image)}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 5px; border: 1px solid var(--border-color);">`
+                    : `<span title="Esta opção está sem foto própria" style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1px dashed #CBD5E0; border-radius: 5px; color: #A0AEC0;"><i class="fa-regular fa-image" style="font-size: 0.75rem;"></i></span>`;
+                const semFotoTag = opt.image ? "" : `<span style="font-size: 0.68rem; color: #E53E3E; font-weight: 600; margin-left: 6px;">sem foto</span>`;
+
+                const subRow = `
+                    <tr style="background-color: #f8fafc;">
+                        <td style="text-align: right; padding-right: 4px;">${optThumb}</td>
+                        <td style="font-size: 0.85rem; color: var(--text-dark);">
+                            <i class="fa-solid fa-arrow-turn-up" style="transform: rotate(90deg); color: #CBD5E0; margin-right: 6px; font-size: 0.7rem;"></i>
+                            ${escapeHTML(varData.name)}: <strong>${escapeHTML(opt.label)}</strong>${semFotoTag}
+                        </td>
+                        <td></td>
+                        <td style="font-size: 0.85rem; white-space: nowrap;">R$&nbsp;${optPrice.toFixed(2).replace('.', ',')}</td>
+                        <td style="text-align: center; font-size: 0.85rem;">
+                            <strong style="color: ${optStock > 0 ? 'var(--text-dark)' : '#E53E3E'};">${optStock}</strong>
+                        </td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML("beforeend", subRow);
+            });
+        }
     });
 
     // Render pagination controls
     renderTablePagination(totalPages);
     bindTableActionEvents();
+    updateProductWarningsBadge();
+}
+
+// ==========================================================================
+// AVISOS DE PRODUTOS (estoque zerado / variações sem foto)
+// ==========================================================================
+
+function getProductWarnings() {
+    const warnings = [];
+
+    adminProducts.forEach(p => {
+        const varData = parseVariationsField(p.variations);
+        if (!varData) return;
+
+        const issues = [];
+        let totalStock = 0;
+
+        varData.options.forEach(opt => {
+            const stock = (typeof opt.stock === "number") ? opt.stock : 0;
+            totalStock += stock;
+            if (stock <= 0) {
+                issues.push({ type: "estoque", text: `${varData.name}: ${opt.label} — estoque zerado` });
+            }
+            if (!opt.image) {
+                issues.push({ type: "foto", text: `${varData.name}: ${opt.label} — sem foto própria` });
+            }
+        });
+
+        if (issues.length > 0) {
+            warnings.push({
+                product: p,
+                totalStock,
+                allOut: totalStock <= 0,
+                issues
+            });
+        }
+    });
+
+    return warnings;
+}
+
+function updateProductWarningsBadge() {
+    const badge = document.getElementById("product-warnings-badge");
+    if (!badge) return;
+    const count = getProductWarnings().reduce((acc, w) => acc + w.issues.length, 0);
+    if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = "inline-flex";
+    } else {
+        badge.style.display = "none";
+    }
+}
+
+function openProductWarningsModal() {
+    const modal = document.getElementById("product-warnings-modal");
+    const list = document.getElementById("product-warnings-list");
+    if (!modal || !list) return;
+
+    const warnings = getProductWarnings();
+
+    if (warnings.length === 0) {
+        list.innerHTML = `
+            <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                <i class="fa-solid fa-circle-check" style="font-size: 2.4rem; color: #48BB78; display: block; margin-bottom: 12px;"></i>
+                Tudo certo! Nenhum produto com estoque zerado ou variação sem foto.
+            </div>
+        `;
+    } else {
+        list.innerHTML = "";
+        warnings.forEach(w => {
+            const media = getProductMedia(w.product.image);
+            const thumb = safeMediaUrl(media[0]);
+
+            const issuesHTML = w.issues.map(i => `
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-dark); margin-top: 6px;">
+                    <i class="fa-solid ${i.type === 'estoque' ? 'fa-box-open' : 'fa-camera'}" style="color: ${i.type === 'estoque' ? '#E53E3E' : '#D69E2E'}; width: 16px; text-align: center;"></i>
+                    ${escapeHTML(i.text)}
+                </div>
+            `).join("");
+
+            const card = document.createElement("div");
+            card.style.cssText = "border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start;";
+            card.innerHTML = `
+                <img src="${thumb}" style="width: 46px; height: 46px; object-fit: cover; border-radius: 6px; flex-shrink: 0;">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                        <strong style="font-size: 0.9rem; color: var(--primary-color);">${escapeHTML(w.product.name)}</strong>
+                        ${w.allOut ? '<span style="font-size: 0.65rem; font-weight: 800; color: white; background: #E53E3E; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; flex-shrink: 0;">Esgotado</span>' : ''}
+                    </div>
+                    ${issuesHTML}
+                    <button class="btn btn-secondary btn-sm btn-warning-edit" style="margin: 10px 0 0; padding: 4px 12px; font-size: 0.75rem;">
+                        <i class="fa-solid fa-pen"></i> Editar produto
+                    </button>
+                </div>
+            `;
+
+            card.querySelector(".btn-warning-edit").addEventListener("click", () => {
+                modal.style.display = "none";
+                editProduct(w.product.id);
+            });
+
+            list.appendChild(card);
+        });
+    }
+
+    modal.style.display = "flex";
 }
 
 // Generate pagination controls buttons
@@ -878,6 +1307,24 @@ function bindEvents() {
             ADMIN_PRODUCTS_PER_PAGE = parseInt(e.target.value);
             adminCurrentPage = 1;
             renderTable();
+        });
+    }
+
+    // Product warnings (estoque zerado / sem foto)
+    const btnProductWarnings = document.getElementById("btn-product-warnings");
+    if (btnProductWarnings) {
+        btnProductWarnings.addEventListener("click", openProductWarningsModal);
+    }
+    const warningsModalClose = document.getElementById("product-warnings-modal-close");
+    if (warningsModalClose) {
+        warningsModalClose.addEventListener("click", () => {
+            document.getElementById("product-warnings-modal").style.display = "none";
+        });
+    }
+    const warningsModal = document.getElementById("product-warnings-modal");
+    if (warningsModal) {
+        warningsModal.addEventListener("click", (e) => {
+            if (e.target === warningsModal) warningsModal.style.display = "none";
         });
     }
 
@@ -1712,8 +2159,15 @@ async function submitProductForm(e) {
     const name = document.getElementById("admin-product-name").value.trim();
     const category = document.getElementById("admin-product-category").value;
     const price = parseFloat(document.getElementById("admin-product-price").value);
+    const oldPriceRaw = document.getElementById("admin-product-old-price")?.value;
+    const oldPrice = oldPriceRaw && !isNaN(parseFloat(oldPriceRaw)) ? parseFloat(oldPriceRaw) : null;
     const badge = document.getElementById("admin-product-badge").value.trim();
     const description = document.getElementById("admin-product-description").value.trim();
+
+    if (oldPrice !== null && oldPrice <= price) {
+        showToast('O preço antigo "De" precisa ser MAIOR que o preço atual para fazer sentido.', "warning");
+        return;
+    }
 
     if (!name || !category || isNaN(price) || uploadedMediaUrls.length === 0 || !description) {
         showToast("Por favor, preencha todos os campos obrigatórios e envie pelo menos 1 imagem/vídeo.", "error");
@@ -1724,12 +2178,11 @@ async function submitProductForm(e) {
         name,
         category,
         price,
+        old_price: oldPrice,
         image: JSON.stringify(uploadedMediaUrls),
         badge: badge || null,
         description,
-        variations: getVariationsPayload(),
-        rating: 5.0,
-        reviews: 0
+        variations: getVariationsPayload()
     };
 
     try {
@@ -1772,6 +2225,8 @@ function editProduct(productId) {
     document.getElementById("admin-product-name").value = product.name;
     document.getElementById("admin-product-category").value = product.category;
     document.getElementById("admin-product-price").value = product.price;
+    const oldPriceInput = document.getElementById("admin-product-old-price");
+    if (oldPriceInput) oldPriceInput.value = (product.old_price !== null && product.old_price !== undefined) ? product.old_price : "";
     document.getElementById("admin-product-badge").value = product.badge || "";
     document.getElementById("admin-product-description").value = product.description;
 
@@ -2431,7 +2886,59 @@ function getContrastColor(hexColor) {
     return (yiq >= 128) ? '#1e293b' : '#ffffff';
 }
 
+// Preenche o rodapé do panfleto: QR code do site + redes sociais das Configurações
+function renderFlyerFooterInfo() {
+    // QR Code (gerado uma única vez)
+    const qrEl = document.getElementById("flyer-qrcode");
+    if (qrEl && typeof QRCode !== "undefined" && qrEl.childElementCount === 0) {
+        new QRCode(qrEl, {
+            text: "https://ravilarutilidades.com.br",
+            width: 88,
+            height: 88,
+            colorDark: "#1A365D",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    }
+
+    // Extrai o @usuario de uma URL de rede social (ex: instagram.com/ravilar -> @ravilar)
+    const handleFromUrl = (url) => {
+        try {
+            const u = new URL(url);
+            const parts = u.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+            return parts.length > 0 ? "@" + parts[parts.length - 1] : u.hostname;
+        } catch (e) {
+            return url;
+        }
+    };
+
+    const instaBox = document.getElementById("flyer-social-instagram");
+    if (instaBox) {
+        const instaUrl = storeSettings["social_instagram"];
+        if (instaUrl && instaUrl.trim()) {
+            instaBox.querySelector("span").textContent = handleFromUrl(instaUrl.trim());
+            instaBox.style.display = "block";
+        } else {
+            instaBox.style.display = "none";
+        }
+    }
+
+    const faceBox = document.getElementById("flyer-social-facebook");
+    if (faceBox) {
+        const faceUrl = storeSettings["social_facebook"];
+        if (faceUrl && faceUrl.trim()) {
+            faceBox.querySelector("span").textContent = handleFromUrl(faceUrl.trim());
+            faceBox.style.display = "block";
+        } else {
+            faceBox.style.display = "none";
+        }
+    }
+}
+
 function initFlyerGenerator() {
+    // Rodapé com QR code e redes sociais
+    renderFlyerFooterInfo();
+
     // 1. Populate category dropdown
     const catSelect = document.getElementById("flyer-category-filter");
     if (catSelect) {
@@ -2509,6 +3016,61 @@ function initFlyerGenerator() {
                 return;
             }
             window.print();
+        });
+    }
+
+    // Baixar PDF do panfleto (mesmo visual da impressão, em A4)
+    const btnFlyerPdf = document.getElementById("btn-download-flyer-pdf");
+    if (btnFlyerPdf) {
+        btnFlyerPdf.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (selectedFlyerProducts.length === 0) {
+                showToast("Selecione pelo menos 1 produto para gerar o PDF.", "error");
+                return;
+            }
+            if (typeof html2canvas === "undefined" || typeof window.jspdf === "undefined") {
+                showToast("Gerador de PDF não carregou. Recarregue a página.", "error");
+                return;
+            }
+
+            const originalHTML = btnFlyerPdf.innerHTML;
+            btnFlyerPdf.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
+            btnFlyerPdf.disabled = true;
+
+            try {
+                const sheet = document.getElementById("flyer-a4-sheet");
+                const canvas = await html2canvas(sheet, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#ffffff",
+                    logging: false
+                });
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+                // Encaixa o panfleto na página A4 (210x297mm) mantendo a proporção
+                const pageW = 210;
+                const pageH = 297;
+                const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+                const w = canvas.width * ratio;
+                const h = canvas.height * ratio;
+                const x = (pageW - w) / 2;
+                const y = (pageH - h) / 2;
+
+                pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", x, y, w, h);
+
+                const dateStr = new Date().toISOString().slice(0, 10);
+                pdf.save(`panfleto_ravilar_${dateStr}.pdf`);
+
+                showToast("PDF do panfleto gerado com sucesso!", "success");
+            } catch (err) {
+                console.error("Erro ao gerar PDF do panfleto:", err);
+                showToast("Erro ao gerar o PDF. Alguma foto externa pode estar bloqueando a exportação.", "error");
+            } finally {
+                btnFlyerPdf.innerHTML = originalHTML;
+                btnFlyerPdf.disabled = false;
+            }
         });
     }
 
@@ -2773,12 +3335,17 @@ function renderFlyerPreview() {
         const integerPart = priceParts[0];
         const centsPart = priceParts[1];
 
+        const flyerOldPrice = (p.old_price && parseFloat(p.old_price) > p.price)
+            ? `<div style="text-decoration: line-through; color: #E53E3E; font-size: 0.72rem; font-weight: 700;">De R$ ${parseFloat(p.old_price).toFixed(2).replace('.', ',')}</div>`
+            : "";
+
         card.innerHTML = `
             <div class="flyer-card-badge">Oferta</div>
             <div class="flyer-card-img-wrapper">
                 <img src="${imgUrl}" class="flyer-card-img" alt="${p.name}">
             </div>
             <div class="flyer-card-title">${p.name}</div>
+            ${flyerOldPrice}
             <div class="flyer-card-price-tag">
                 <span class="flyer-price-currency">R$</span>
                 <span class="flyer-price-integer">${integerPart}</span>
@@ -4255,6 +4822,9 @@ async function loadStoreSettings() {
     } catch (e) {
         showToast("Erro ao carregar configurações: " + e.message, "error");
     }
+
+    // Atualiza o rodapé do panfleto (redes sociais podem ter mudado)
+    renderFlyerFooterInfo();
 }
 
 async function saveStoreSettings(e) {

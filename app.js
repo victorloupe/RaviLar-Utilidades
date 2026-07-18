@@ -663,6 +663,14 @@ function getTestimonialImageStyle(index, activeIndex, testimonialsLength, contai
     };
 }
 
+// Abrevia o nome do cliente por privacidade: "Victor Lourenço Pereira" -> "Victor L."
+function formatReviewName(fullName) {
+    const parts = String(fullName || "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "Cliente RaviLar";
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} ${parts[1].charAt(0).toUpperCase()}.`;
+}
+
 async function loadTestimonials() {
     if (!supabaseClient) {
         testimonialsList = FALLBACK_TESTIMONIALS;
@@ -695,7 +703,7 @@ async function loadTestimonials() {
                 }
                 return {
                     id: item.id,
-                    name: item.name,
+                    name: formatReviewName(item.name),
                     quote: item.quote,
                     rating: item.rating || 5,
                     productId: productId,
@@ -1576,7 +1584,10 @@ function renderProducts() {
         const productCategory = escapeHTML(String(p.category || "").replace("-", " "));
         const productId = escapeHTML(p.id);
         const badgeHTML = p.badge ? `<span class="product-badge">${escapeHTML(p.badge)}</span>` : "";
-        const priceHTML = `R$ ${p.price.toFixed(2).replace('.', ',')}`;
+        const hasOldPrice = p.old_price && parseFloat(p.old_price) > p.price;
+        const priceHTML = hasOldPrice
+            ? `<span style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 600;"><s>De R$ ${parseFloat(p.old_price).toFixed(2).replace('.', ',')}</s></span>R$ ${p.price.toFixed(2).replace('.', ',')}`
+            : `R$ ${p.price.toFixed(2).replace('.', ',')}`;
         
         // Use first image of media list for catalog display thumbnail
         const mediaList = getProductMedia(p.image);
@@ -1735,6 +1746,22 @@ function openProductModal(productId) {
     modalProductName.textContent = product.name;
     modalProductPrice.textContent = `R$ ${product.price.toFixed(2).replace('.', ',')}`;
     modalProductDesc.textContent = product.description;
+
+    // Preço antigo "De" riscado (quando em oferta)
+    let oldPriceEl = document.getElementById("modal-old-price");
+    if (!oldPriceEl && modalProductPrice) {
+        modalProductPrice.insertAdjacentHTML("beforebegin", '<div id="modal-old-price" style="display: none; font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;"></div>');
+        oldPriceEl = document.getElementById("modal-old-price");
+    }
+    const oldPriceVal = parseFloat(product.old_price);
+    if (oldPriceEl) {
+        if (oldPriceVal && oldPriceVal > product.price) {
+            oldPriceEl.innerHTML = `De <s>R$ ${oldPriceVal.toFixed(2).replace('.', ',')}</s> por:`;
+            oldPriceEl.style.display = "block";
+        } else {
+            oldPriceEl.style.display = "none";
+        }
+    }
     
     // Dynamic stars & reviews for modal
     const modalProductStars = document.getElementById("modal-product-stars");

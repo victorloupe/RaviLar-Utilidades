@@ -30,6 +30,12 @@ CREATE TABLE IF NOT EXISTS public.products (
 -- Garantir coluna de variações em bancos existentes
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS variations JSONB;
 
+-- Preço antigo "De" para ofertas (riscado na loja/panfleto quando preenchido)
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS old_price NUMERIC;
+
+-- Avaliações podem pertencer a um cliente (ver fix_de_por_e_avaliacoes.sql)
+ALTER TABLE public.reviews ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+
 -- Coluna e trigger de "última edição" (usada para ordenar o admin)
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
 

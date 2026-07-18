@@ -128,6 +128,7 @@ let activeTab = "resumo";
 let orders = [];
 let addresses = [];
 let favorites = [];
+let myReviews = new Set(); // product_ids que o cliente já avaliou
 
 // DOM Elements
 const authSection = document.getElementById("auth-section");
@@ -482,16 +483,18 @@ async function loadPortalData() {
 
     try {
         // Fetch all user statistics concurrently
-        const [ordersRes, addrRes, favRes] = await Promise.all([
+        const [ordersRes, addrRes, favRes, revRes] = await Promise.all([
             // Busca pedidos vinculados à conta OU feitos com o mesmo e-mail (ex: pedidos como convidado)
             supabaseClient.from("orders").select("*").or(`user_id.eq.${currentUser.id},client_email.eq.${currentUser.email}`).order("id", { ascending: false }),
             supabaseClient.from("client_addresses").select("*").eq("user_id", currentUser.id).order("is_default", { ascending: false }),
-            supabaseClient.from("favorites").select("*, products(*)").eq("user_id", currentUser.id)
+            supabaseClient.from("favorites").select("*, products(*)").eq("user_id", currentUser.id),
+            supabaseClient.from("reviews").select("product_id").eq("user_id", currentUser.id)
         ]);
 
         orders = ordersRes.data || [];
         addresses = addrRes.data || [];
         favorites = favRes.data || [];
+        myReviews = new Set((revRes.data || []).map(r => Number(r.product_id)));
 
         // Auto-heal: garante que o endereço padrão esteja refletido na tabela
         // pública de clientes (usada pela aba Clientes do admin)
@@ -741,6 +744,11 @@ async function openOrderDetailsModal(orderId) {
                 </div>
             `;
             itemsListContainer.appendChild(row);
+
+            // Pedido entregue: cliente pode avaliar o produto
+            if (order.status === "Entregue" && item.product_id) {
+                itemsListContainer.appendChild(buildReviewArea(item));
+            }
         });
 
         // Open Modal
@@ -749,6 +757,99 @@ async function openOrderDetailsModal(orderId) {
     } catch (e) {
         alert("Erro ao carregar detalhes do pedido: " + e.message);
     }
+}
+
+// Área de avaliação de um item de pedido entregue
+function buildReviewArea(item) {
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "padding: 6px 0 12px; border-bottom: 1px solid var(--border-color);";
+
+    const alreadyReviewed = () => {
+        wrap.innerHTML = `<span style="font-size: 0.8rem; color: #48BB78; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Você já avaliou este produto. Obrigado!</span>`;
+    };
+
+    if (myReviews.has(Number(item.product_id))) {
+        alreadyReviewed();
+        return wrap;
+    }
+
+    const btn = document.createElement("button");
+    btn.className = "btn btn-secondary btn-sm";
+    btn.style.cssText = "margin: 4px 0 0; padding: 5px 12px; font-size: 0.75rem;";
+    btn.innerHTML = '<i class="fa-solid fa-star" style="color: #F6AD55;"></i> Avaliar produto';
+
+    btn.addEventListener("click", () => {
+        btn.style.display = "none";
+
+        const form = document.createElement("div");
+        form.style.cssText = "margin-top: 8px; display: flex; flex-direction: column; gap: 8px;";
+        form.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 0.8rem; font-weight: 600; margin: 0;">Sua nota:</label>
+                <select class="review-rating" style="width: auto; padding: 6px 10px; font-size: 0.85rem; border: 1px solid var(--border-color); border-radius: 6px;">
+                    <option value="5">⭐⭐⭐⭐⭐ Excelente</option>
+                    <option value="4">⭐⭐⭐⭐ Muito bom</option>
+                    <option value="3">⭐⭐⭐ Bom</option>
+                    <option value="2">⭐⭐ Regular</option>
+                    <option value="1">⭐ Ruim</option>
+                </select>
+            </div>
+            <textarea class="review-quote" placeholder="Conte como foi sua experiência com o produto..." style="min-height: 70px; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 0.85rem; resize: vertical;"></textarea>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary btn-sm review-send" style="margin: 0; padding: 6px 16px; font-size: 0.78rem;">Enviar avaliação</button>
+                <button class="btn btn-secondary btn-sm review-cancel" style="margin: 0; padding: 6px 16px; font-size: 0.78rem;">Cancelar</button>
+            </div>
+        `;
+        wrap.appendChild(form);
+
+        form.querySelector(".review-cancel").addEventListener("click", () => {
+            form.remove();
+            btn.style.display = "";
+        });
+
+        form.querySelector(".review-send").addEventListener("click", async () => {
+            const rating = parseInt(form.querySelector(".review-rating").value);
+            const quote = form.querySelector(".review-quote").value.trim();
+            if (!quote) {
+                alert("Escreva um comentário para a sua avaliação.");
+                return;
+            }
+
+            const sendBtn = form.querySelector(".review-send");
+            sendBtn.disabled = true;
+            sendBtn.textContent = "Enviando...";
+
+            try {
+                const { error } = await supabaseClient.from("reviews").insert({
+                    name: currentUser.user_metadata?.name || currentUser.email.split("@")[0],
+                    quote: quote,
+                    rating: rating,
+                    product_id: item.product_id,
+                    user_id: currentUser.id
+                });
+                if (error) throw error;
+
+                myReviews.add(Number(item.product_id));
+                alreadyReviewed();
+                alert("Avaliação enviada com sucesso! Ela já conta na nota do produto na loja.");
+            } catch (e) {
+                sendBtn.disabled = false;
+                sendBtn.textContent = "Enviar avaliação";
+                const msg = e.message || "";
+                if (msg.includes("row-level security")) {
+                    alert("Não foi possível enviar: a avaliação é liberada quando o pedido está marcado como Entregue.");
+                } else if (msg.includes("duplicate")) {
+                    myReviews.add(Number(item.product_id));
+                    alreadyReviewed();
+                } else {
+                    alert("Erro ao enviar avaliação: " + msg);
+                }
+            }
+        });
+    });
+
+    wrap.appendChild(btn);
+    return wrap;
 }
 
 // TAB 3: ADDRESSES TAB RENDERER

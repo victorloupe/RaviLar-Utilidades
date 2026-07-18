@@ -2165,32 +2165,40 @@ button {
 /* Stats Row */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(5, 1fr); /* os 5 cards sempre na mesma linha */
+    gap: 16px;
     margin-bottom: 8px;
+}
+
+/* Em telas menores, volta a quebrar para não espremer */
+@media (max-width: 1100px) {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
 }
 
 .stat-card {
     background-color: var(--bg-white);
-    padding: 24px;
+    padding: 16px 18px;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
     border: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 14px;
 }
 
 .stat-icon {
-    width: 50px;
-    height: 50px;
+    width: 42px;
+    height: 42px;
     border-radius: var(--border-radius-sm);
     background-color: var(--primary-light);
     color: var(--primary-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
+    flex-shrink: 0;
 }
 
 .stat-card:nth-child(2n) .stat-icon {
@@ -2200,16 +2208,18 @@ button {
 
 .stat-info h3 {
     font-family: var(--font-title);
-    font-size: 1.8rem;
+    font-size: 1.3rem;
     font-weight: 800;
     color: var(--primary-color);
     line-height: 1.2;
+    white-space: nowrap;
 }
 
 .stat-info p {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     font-weight: 500;
+    line-height: 1.3;
 }
 
 /* Form & List Columns */
@@ -2791,11 +2801,9 @@ button {
    ========================================================================== */
 .admin-tabs {
     display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center; /* grupos centralizados */
+    gap: 8px;
     margin-bottom: 32px;
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 0;
@@ -2810,11 +2818,11 @@ button {
     flex-wrap: nowrap;
     flex-shrink: 0;
     align-items: flex-end;
-    gap: 4px;
+    gap: 2px;
     position: relative;
     padding-top: 18px; /* espaço para o rótulo do grupo */
     border-right: 1px solid var(--border-color);
-    padding-right: 15px;
+    padding-right: 8px;
     margin-bottom: -2px; /* alinha com a borda inferior das abas */
 }
 
@@ -2845,11 +2853,11 @@ button {
 }
 
 .admin-tab-btn {
-    padding: 10px 16px;
+    padding: 9px 9px;
     background: none;
     border: none;
     font-family: var(--font-title);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-muted);
     cursor: pointer;
@@ -3372,23 +3380,50 @@ button {
 }
 
 .flyer-header {
-    padding: 24px;
+    padding: 22px 28px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
     position: relative;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    border-bottom: 1px solid #edf2f7;
+    overflow: hidden;
+    border-bottom: 5px solid #D4A75C;
+}
+
+/* Detalhe decorativo: círculos dourados translúcidos no canto direito */
+.flyer-header::before {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -70px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(212, 167, 92, 0.16);
+    pointer-events: none;
+}
+
+.flyer-header::after {
+    content: "";
+    position: absolute;
+    right: 40px;
+    bottom: -90px;
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    background: rgba(212, 167, 92, 0.12);
+    pointer-events: none;
 }
 
 .flyer-logo-area {
-    width: 140px;
-    height: 55px;
+    width: 200px;
+    height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     flex-shrink: 0;
+    position: relative;
+    z-index: 1;
 }
 
 .flyer-logo-img {
@@ -3400,37 +3435,44 @@ button {
 .flyer-header-content {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 5px;
     color: inherit;
+    position: relative;
+    z-index: 1;
 }
 
 .flyer-header-content h1 {
     font-family: var(--font-title);
-    font-size: 2.2rem;
+    font-size: 2.5rem;
     font-weight: 800;
     margin: 0;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    line-height: 1.1;
+    letter-spacing: 1.5px;
+    line-height: 1.05;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .flyer-header-content h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 700;
     margin: 0;
-    opacity: 0.9;
+    color: #B7791F;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
 }
 
 .flyer-badge-validity {
     display: inline-block;
-    background-color: #FEEBC8;
-    color: #C05621;
-    font-size: 0.85rem;
-    font-weight: 700;
-    padding: 4px 12px;
+    background: linear-gradient(135deg, #D4A75C, #b98a3e);
+    color: #ffffff;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 5px 16px;
     border-radius: 9999px;
-    margin-top: 4px;
+    margin-top: 5px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(185, 138, 62, 0.35);
+    align-self: flex-start;
     align-self: flex-start;
 }
 
@@ -3584,6 +3626,12 @@ button {
 
 /* Print Styles */
 @media print {
+    /* Garante que as cores do panfleto (dourado, QR, badges) saiam na impressão */
+    .flyer-a4-sheet, .flyer-a4-sheet * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
     /* Hide all main elements of the site */
     header, footer, nav, .admin-tabs, .flyer-controls-card, .admin-card-header, .admin-status-toast {
         display: none !important;
