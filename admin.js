@@ -443,6 +443,12 @@ function renderPostPreview() {
     };
     const pal = palettes[template] || palettes.navy;
 
+    // Tamanhos dos balões em px (usados também para corrigir o texto na exportação)
+    const headlineFs = isStory ? 16 : 14;
+    const headlineLh = isStory ? 40 : 32;
+    const priceFs = isStory ? 48 : 37;
+    const priceLh = isStory ? 76 : 58;
+
     canvas.innerHTML = `
         <div id="post-art" style="width: ${W}px; height: ${H}px; position: relative; overflow: hidden; background: ${pal.bg}; font-family: 'Montserrat', 'Inter', sans-serif; display: flex; flex-direction: column; box-sizing: border-box;">
             <!-- Círculos decorativos -->
@@ -454,7 +460,7 @@ function renderPostPreview() {
                 <div style="${pal.logoPill} line-height: 0;">
                     <img src="LogoSite.png" style="height: ${isStory ? '46px' : '38px'}; width: auto;">
                 </div>
-                <div style="${pal.headlineCss} font-weight: 800; font-size: ${isStory ? '1rem' : '0.85rem'}; padding: ${isStory ? '10px 20px' : '8px 16px'}; border-radius: 9999px; letter-spacing: 1px; text-transform: uppercase;">${escapeHTML(headline)}</div>
+                <div class="post-pill" data-fs="${headlineFs}" data-lh="${headlineLh}" style="${pal.headlineCss} font-weight: 800; font-size: ${headlineFs}px; height: ${headlineLh}px; line-height: ${headlineLh}px; padding: 0 ${isStory ? '20px' : '16px'}; border-radius: 9999px; letter-spacing: 1px; text-transform: uppercase; box-sizing: border-box;"><span class="post-pill-text" style="display: inline-block;">${escapeHTML(headline)}</span></div>
             </div>
 
             <!-- Foto do produto -->
@@ -466,22 +472,18 @@ function renderPostPreview() {
 
             <!-- Nome + preço -->
             <div style="text-align: center; padding: ${isStory ? '18px 40px' : '12px 36px'}; position: relative; z-index: 2;">
-                <div style="color: ${pal.nameColor}; font-weight: 800; font-size: ${isStory ? '1.5rem' : '1.15rem'}; line-height: 1.25;">${escapeHTML(product.name)}</div>
+                <div class="post-nudge-up" style="color: ${pal.nameColor}; font-weight: 800; font-size: ${isStory ? '1.5rem' : '1.15rem'}; line-height: 1.25;">${escapeHTML(product.name)}</div>
                 ${showPrice && product.old_price && parseFloat(product.old_price) > product.price ? `
                 <div style="color: ${pal.nameColor}; opacity: 0.75; font-weight: 700; font-size: ${isStory ? '1.05rem' : '0.85rem'}; margin-top: ${isStory ? '10px' : '6px'};">De <s>R$ ${parseFloat(product.old_price).toFixed(2).replace('.', ',')}</s> por:</div>` : ""}
                 ${showPrice ? `
-                <div style="margin-top: ${isStory ? '16px' : '10px'}; display: inline-flex; align-items: baseline; gap: 4px; ${pal.priceCss} border-radius: 14px; padding: ${isStory ? '10px 28px' : '8px 22px'};">
-                    <span style="font-weight: 700; font-size: ${isStory ? '1.1rem' : '0.95rem'};">R$</span>
-                    <span style="font-weight: 900; font-size: ${isStory ? '3rem' : '2.3rem'}; line-height: 1;">${priceParts[0]}</span>
-                    <span style="font-weight: 800; font-size: ${isStory ? '1.4rem' : '1.1rem'};">,${priceParts[1]}</span>
-                </div>` : ""}
+                <div class="post-pill" data-fs="${priceFs}" data-lh="${priceLh}" style="margin-top: ${isStory ? '16px' : '10px'}; display: inline-block; white-space: nowrap; font-size: ${priceFs}px; height: ${priceLh}px; line-height: ${priceLh}px; ${pal.priceCss} border-radius: 14px; padding: 0 ${isStory ? '28px' : '22px'}; box-sizing: border-box;"><span class="post-pill-text" style="display: inline-block;"><span style="font-weight: 700; font-size: ${isStory ? '18px' : '15px'};">R$ </span><span style="font-weight: 900;">${priceParts[0]}</span><span style="font-weight: 800; font-size: ${isStory ? '22px' : '18px'};">,${priceParts[1]}</span></span></div>` : ""}
             </div>
 
             <!-- Rodapé -->
             <div style="${pal.footerCss} padding: ${isStory ? '18px 30px 26px' : '12px 26px 16px'}; text-align: center; position: relative; z-index: 2;">
                 <div style="color: ${pal.ctaColor}; font-weight: 800; font-size: ${isStory ? '1.05rem' : '0.85rem'};">${escapeHTML(cta)}</div>
                 <div style="color: ${pal.footerTextColor}; font-weight: 600; font-size: ${isStory ? '0.85rem' : '0.7rem'}; margin-top: 5px;">
-                    ravilarutilidades.com.br &nbsp;•&nbsp; (17) 99637-1743${instaHandle ? ` &nbsp;•&nbsp; ${escapeHTML(instaHandle)}` : ""}
+                    ravilarutilidades.com.br &nbsp;•&nbsp; ${escapeHTML(storeSettings["contact_whatsapp"] || "(17) 99637-1743")}${instaHandle ? ` &nbsp;•&nbsp; ${escapeHTML(instaHandle)}` : ""}
                 </div>
             </div>
         </div>
@@ -511,7 +513,30 @@ async function downloadPostImage() {
             scale: 2, // 540 -> 1080
             useCORS: true,
             backgroundColor: null,
-            logging: false
+            logging: false,
+            // O html2canvas ignora o espaçamento extra do line-height e desenha o
+            // texto colado na base da linha. Na cópia usada para exportar,
+            // convertemos esse espaçamento em padding para o texto ficar centralizado.
+            onclone: (clonedDoc) => {
+                clonedDoc.querySelectorAll(".post-pill").forEach(pill => {
+                    const fontSize = parseFloat(pill.dataset.fs);
+                    const lineHeight = parseFloat(pill.dataset.lh);
+                    if (!fontSize || !lineHeight || lineHeight <= fontSize) return;
+                    const gap = (lineHeight - fontSize) / 2;
+                    pill.style.height = "auto";
+                    pill.style.lineHeight = fontSize + "px";
+                    pill.style.paddingTop = gap + "px";
+                    pill.style.paddingBottom = gap + "px";
+                });
+
+                // Ajuste fino: o gerador de imagem desenha o texto um pouco abaixo
+                // do navegador. Sobe os textos alguns pixels só na exportação.
+                // Aumente o número para subir mais, diminua para descer.
+                const NUDGE = 11;
+                clonedDoc.querySelectorAll(".post-pill-text, .post-nudge-up").forEach(el => {
+                    el.style.transform = `translateY(-${NUDGE}px)`;
+                });
+            }
         });
 
         const format = document.getElementById("post-format")?.value || "feed";
@@ -2899,6 +2924,19 @@ function renderFlyerFooterInfo() {
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.M
         });
+        // html2canvas não captura o <canvas> do QR de forma confiável no PDF.
+        // Converte para uma <img> simples com data URL, que exporta sempre.
+        const qrCanvas = qrEl.querySelector("canvas");
+        if (qrCanvas) {
+            const dataUrl = qrCanvas.toDataURL("image/png");
+            qrEl.innerHTML = `<img src="${dataUrl}" width="88" height="88" style="display: block;" alt="QR code do site">`;
+        }
+    }
+
+    // WhatsApp configurado nas Configurações da loja
+    const flyerWhats = document.getElementById("flyer-whatsapp-number");
+    if (flyerWhats && storeSettings["contact_whatsapp"]) {
+        flyerWhats.textContent = storeSettings["contact_whatsapp"];
     }
 
     // Extrai o @usuario de uma URL de rede social (ex: instagram.com/ravilar -> @ravilar)
@@ -3019,58 +3057,18 @@ function initFlyerGenerator() {
         });
     }
 
-    // Baixar PDF do panfleto (mesmo visual da impressão, em A4)
+    // Baixar PDF do panfleto: usa a impressão do navegador (mesmo visual, sem bugs de exportação).
+    // Basta escolher "Salvar como PDF" como destino na janela de impressão.
     const btnFlyerPdf = document.getElementById("btn-download-flyer-pdf");
     if (btnFlyerPdf) {
-        btnFlyerPdf.addEventListener("click", async (e) => {
+        btnFlyerPdf.addEventListener("click", (e) => {
             e.preventDefault();
             if (selectedFlyerProducts.length === 0) {
                 showToast("Selecione pelo menos 1 produto para gerar o PDF.", "error");
                 return;
             }
-            if (typeof html2canvas === "undefined" || typeof window.jspdf === "undefined") {
-                showToast("Gerador de PDF não carregou. Recarregue a página.", "error");
-                return;
-            }
-
-            const originalHTML = btnFlyerPdf.innerHTML;
-            btnFlyerPdf.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando PDF...';
-            btnFlyerPdf.disabled = true;
-
-            try {
-                const sheet = document.getElementById("flyer-a4-sheet");
-                const canvas = await html2canvas(sheet, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: "#ffffff",
-                    logging: false
-                });
-
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-
-                // Encaixa o panfleto na página A4 (210x297mm) mantendo a proporção
-                const pageW = 210;
-                const pageH = 297;
-                const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
-                const w = canvas.width * ratio;
-                const h = canvas.height * ratio;
-                const x = (pageW - w) / 2;
-                const y = (pageH - h) / 2;
-
-                pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", x, y, w, h);
-
-                const dateStr = new Date().toISOString().slice(0, 10);
-                pdf.save(`panfleto_ravilar_${dateStr}.pdf`);
-
-                showToast("PDF do panfleto gerado com sucesso!", "success");
-            } catch (err) {
-                console.error("Erro ao gerar PDF do panfleto:", err);
-                showToast("Erro ao gerar o PDF. Alguma foto externa pode estar bloqueando a exportação.", "error");
-            } finally {
-                btnFlyerPdf.innerHTML = originalHTML;
-                btnFlyerPdf.disabled = false;
-            }
+            showToast('Na janela de impressão, escolha "Salvar como PDF" como destino.', "info");
+            window.print();
         });
     }
 
@@ -4819,6 +4817,16 @@ async function loadStoreSettings() {
         const socialFacebook = document.getElementById("admin-setting-social-facebook");
         if (socialInstagram) socialInstagram.value = storeSettings['social_instagram'] || "";
         if (socialFacebook) socialFacebook.value = storeSettings['social_facebook'] || "";
+
+        // Atendimento: WhatsApp, e-mail e horários
+        const contactWhats = document.getElementById("admin-setting-contact-whatsapp");
+        const contactEmail = document.getElementById("admin-setting-contact-email");
+        const hoursWeekday = document.getElementById("admin-setting-hours-weekday");
+        const hoursWeekend = document.getElementById("admin-setting-hours-weekend");
+        if (contactWhats) contactWhats.value = storeSettings['contact_whatsapp'] || "(17) 99637-1743";
+        if (contactEmail) contactEmail.value = storeSettings['contact_email'] || "ravilarutilidades@gmail.com";
+        if (hoursWeekday) hoursWeekday.value = storeSettings['hours_weekday'] || "Seg. a Sex. das 9h às 18h";
+        if (hoursWeekend) hoursWeekend.value = storeSettings['hours_weekend'] || "Sábados das 9h às 13h";
     } catch (e) {
         showToast("Erro ao carregar configurações: " + e.message, "error");
     }
@@ -4838,6 +4846,10 @@ async function saveStoreSettings(e) {
     const meSandbox = document.getElementById("admin-setting-me-sandbox").checked ? 'true' : 'false';
     const socialInstagram = (document.getElementById("admin-setting-social-instagram")?.value || "").trim();
     const socialFacebook = (document.getElementById("admin-setting-social-facebook")?.value || "").trim();
+    const contactWhatsapp = (document.getElementById("admin-setting-contact-whatsapp")?.value || "").trim();
+    const contactEmail = (document.getElementById("admin-setting-contact-email")?.value || "").trim();
+    const hoursWeekday = (document.getElementById("admin-setting-hours-weekday")?.value || "").trim();
+    const hoursWeekend = (document.getElementById("admin-setting-hours-weekend")?.value || "").trim();
 
     try {
         const { error: err1 } = await supabaseClient
@@ -4849,7 +4861,11 @@ async function saveStoreSettings(e) {
                 { key: 'melhor_envio_token', value: meToken },
                 { key: 'melhor_envio_sandbox', value: meSandbox },
                 { key: 'social_instagram', value: socialInstagram },
-                { key: 'social_facebook', value: socialFacebook }
+                { key: 'social_facebook', value: socialFacebook },
+                { key: 'contact_whatsapp', value: contactWhatsapp },
+                { key: 'contact_email', value: contactEmail },
+                { key: 'hours_weekday', value: hoursWeekday },
+                { key: 'hours_weekend', value: hoursWeekend }
             ]);
 
         if (err1) throw err1;

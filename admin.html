@@ -933,7 +933,7 @@
                                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 18px; text-align: left;">
                                         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
                                             <div style="font-weight: 800; font-size: 0.9rem; color: #1A365D;">
-                                                <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> Peça pelo WhatsApp: (17) 99637-1743
+                                                <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i> Peça pelo WhatsApp: <span id="flyer-whatsapp-number">(17) 99637-1743</span>
                                             </div>
                                             <div style="display: flex; flex-wrap: wrap; gap: 4px 14px;">
                                                 <span id="flyer-social-instagram" style="display: none; font-weight: 600; font-size: 0.78rem; color: #334155;">
@@ -1186,6 +1186,34 @@
                                             <span>Ambiente Sandbox</span>
                                         </label>
                                         <small style="color: var(--text-muted); display: block; margin-top: 4px;">Marque para usar chaves de teste.</small>
+                                    </div>
+                                </div>
+
+                                <!-- Atendimento (horário + WhatsApp) -->
+                                <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+                                    <h3 style="margin: 0 0 15px 0; font-size: 1rem; font-weight: 700; color: var(--primary-color);">
+                                        <i class="fa-solid fa-headset"></i> Atendimento
+                                    </h3>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px;">
+                                        <div class="form-group">
+                                            <label for="admin-setting-contact-whatsapp"><i class="fa-brands fa-whatsapp"></i> WhatsApp de atendimento</label>
+                                            <input type="text" id="admin-setting-contact-whatsapp" placeholder="(17) 99637-1743">
+                                            <small style="color: var(--text-muted); display: block; margin-top: 4px;">Aparece no rodapé, no Fale Conosco e nos panfletos.</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="admin-setting-contact-email"><i class="fa-solid fa-envelope"></i> E-mail de contato</label>
+                                            <input type="email" id="admin-setting-contact-email" placeholder="contato@sualoja.com.br">
+                                            <small style="color: var(--text-muted); display: block; margin-top: 4px;">Exibido na seção Fale Conosco.</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="admin-setting-hours-weekday"><i class="fa-solid fa-clock"></i> Horário de segunda a sexta</label>
+                                            <input type="text" id="admin-setting-hours-weekday" placeholder="Seg. a Sex. das 9h às 18h">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="admin-setting-hours-weekend"><i class="fa-solid fa-clock"></i> Horário de sábado/domingo</label>
+                                            <input type="text" id="admin-setting-hours-weekend" placeholder="Sábados das 9h às 13h">
+                                            <small style="color: var(--text-muted); display: block; margin-top: 4px;">Deixe vazio para não exibir a segunda linha.</small>
+                                        </div>
                                     </div>
                                 </div>
 

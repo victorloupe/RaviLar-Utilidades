@@ -458,7 +458,7 @@ const FALLBACK_PRODUCTS = [
 let PRODUCTS = [];
 
 // WhatsApp Shop Configuration
-const SHOP_WHATSAPP_NUMBER = "5517996371743"; // Substituir pelo número real da loja RaviLar
+let SHOP_WHATSAPP_NUMBER = "5517996371743"; // Padrão; sobrescrito pelas Configurações do admin
 
 // ==========================================================================
 // APPLICATION STATE
@@ -860,7 +860,11 @@ async function loadSocialLinks() {
         const { data, error } = await supabaseClient
             .from("store_settings")
             .select("key, value")
-            .in("key", ["social_instagram", "social_facebook"]);
+            .in("key", [
+                "social_instagram", "social_facebook",
+                "contact_whatsapp", "contact_email",
+                "hours_weekday", "hours_weekend"
+            ]);
 
         if (error) throw error;
 
@@ -881,6 +885,44 @@ async function loadSocialLinks() {
         // Ícones do rodapé (coluna Atendimento)
         applyLink("social-instagram-footer", settings["social_instagram"]);
         applyLink("social-facebook-footer", settings["social_facebook"]);
+
+        // WhatsApp de atendimento (rodapé + Fale Conosco + botão de pedido)
+        const rawWhats = (settings["contact_whatsapp"] || "").trim();
+        if (rawWhats) {
+            const digits = rawWhats.replace(/\D/g, "");
+            const waNumber = digits.length <= 11 ? "55" + digits : digits;
+            SHOP_WHATSAPP_NUMBER = waNumber;
+            ["footer-whatsapp-link", "contact-whatsapp-link"].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.textContent = rawWhats;
+                el.href = `https://wa.me/${waNumber}`;
+            });
+        }
+
+        // E-mail de contato
+        const email = (settings["contact_email"] || "").trim();
+        const emailEl = document.getElementById("contact-email-link");
+        if (email && emailEl) {
+            emailEl.textContent = email;
+            emailEl.href = `mailto:${email}`;
+        }
+
+        // Horários de atendimento
+        const applyHours = (elId, value) => {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            if (value && value.trim()) {
+                el.textContent = value.trim();
+                el.style.display = "";
+                if (el.previousElementSibling?.tagName === "BR") el.previousElementSibling.style.display = "";
+            } else {
+                el.style.display = "none";
+                if (el.previousElementSibling?.tagName === "BR") el.previousElementSibling.style.display = "none";
+            }
+        };
+        if ("hours_weekday" in settings) applyHours("footer-hours-weekday", settings["hours_weekday"]);
+        if ("hours_weekend" in settings) applyHours("footer-hours-weekend", settings["hours_weekend"]);
     } catch (e) {
         console.warn("Não foi possível carregar os links sociais:", e.message);
     }
