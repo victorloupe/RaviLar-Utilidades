@@ -5623,7 +5623,7 @@ async function loadStoreLinks() {
         }
 
         if (linksPageUrlInput) {
-            linksPageUrlInput.value = window.location.origin + "/links.html";
+            linksPageUrlInput.value = window.location.origin + "/links";
         }
 
         renderStoreLinksList();
