@@ -1273,6 +1273,37 @@
                         </div>
                     </div>
 
+                    <!-- Card: Gerenciador de Links -->
+                    <div class="admin-card" style="margin-top: 20px;">
+                        <div class="admin-card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                            <h2><i class="fa-solid fa-link"></i> Gerenciador de Links da Loja (links.html)</h2>
+                            <button class="btn btn-primary btn-sm" id="btn-add-store-link">
+                                Novo Link <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="admin-card-body">
+                            <!-- Link Page URL Field -->
+                            <div class="form-group" style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px;">
+                                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Link da Página de Links</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="admin-links-page-url" readonly style="flex: 1; background: var(--bg-light); border: 1px solid var(--border-color); padding: 10px 12px; border-radius: 6px; font-size: 0.9rem;" value="">
+                                    <button type="button" class="btn btn-secondary" id="btn-copy-links-url" style="padding: 10px 16px;">
+                                        Copiar Link <i class="fa-solid fa-copy"></i>
+                                    </button>
+                                </div>
+                                <small style="color: var(--text-muted); display: block; margin-top: 6px;">
+                                    Use este link na biografia do seu Instagram, TikTok e outras redes sociais.
+                                </small>
+                            </div>
+
+                            <!-- List of Links -->
+                            <h3 style="font-size: 1rem; font-weight: 700; margin: 0 0 12px 0; color: var(--primary-color);">Links Cadastrados</h3>
+                            <div id="admin-store-links-list" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="text-align: center; color: var(--text-muted); padding: 20px;">Carregando links...</div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -1306,6 +1337,67 @@
 
                             <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px; padding: 12px;">
                                 Salvar Regra de Frete <i class="fa-solid fa-circle-check"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: ADD/EDIT STORE LINK -->
+            <div class="admin-modal" id="store-link-modal" style="display: none;">
+                <div class="admin-modal-content">
+                    <div class="admin-modal-header">
+                        <h2 id="store-link-modal-title">Cadastrar Novo Link</h2>
+                        <button class="admin-modal-close" id="store-link-modal-close">&times;</button>
+                    </div>
+                    <div class="admin-modal-body">
+                        <form id="admin-store-link-form">
+                            <input type="hidden" id="admin-store-link-index">
+                            
+                            <div class="form-group">
+                                <label for="admin-link-label">Título / Texto do Link *</label>
+                                <input type="text" id="admin-link-label" required placeholder="Ex: Siga no Instagram, Visite nossa Shopee">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="admin-link-url">URL de Destino *</label>
+                                <input type="url" id="admin-link-url" required placeholder="https://instagram.com/ravilarutilidades">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="admin-link-icon-type">Tipo de Ícone *</label>
+                                <select id="admin-link-icon-type" required style="width: 100%; padding: 10px; border-radius: var(--border-radius-sm); border: 1px solid var(--border-color);">
+                                    <option value="upload">Carregar Imagem Personalizada</option>
+                                    <option value="instagram">Ícone do Instagram</option>
+                                    <option value="tiktok">Ícone do TikTok</option>
+                                    <option value="shopee">Ícone da Shopee</option>
+                                    <option value="web">Ícone de Loja/Site (Globo/Casa)</option>
+                                    <option value="whatsapp">Ícone do WhatsApp</option>
+                                    <option value="fallback">Ícone de Link Genérico</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="link-upload-container">
+                                <label>Imagem / Ícone do Link (Arrastar & Soltar)</label>
+                                <div class="media-upload-zone" id="link-drop-zone" style="padding: 24px 16px;">
+                                    <i class="fa-solid fa-image" style="font-size: 1.8rem;"></i>
+                                    <p style="font-size: 0.85rem; margin-top: 4px;">Arraste o ícone aqui ou clique para selecionar</p>
+                                    <input type="file" id="link-file-input" accept="image/*" style="display: none;">
+                                </div>
+                                <!-- Progress indicator for link cover -->
+                                <div class="upload-progress-container hide" id="link-progress-bar">
+                                    <div class="upload-progress-fill" id="link-progress-fill" style="width: 0%;"></div>
+                                    <span class="upload-progress-text" id="link-progress-text">Enviando imagem...</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="admin-link-image" style="font-size: 0.8rem; color: var(--text-muted);">Identificador / URL da Imagem *</label>
+                                <input type="text" id="admin-link-image" required readonly style="font-size: 0.8rem; background-color: var(--bg-light); border: 1px solid var(--border-color); width:100%; padding: 8px 12px; border-radius:4px;">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px; padding: 12px;">
+                                Salvar Link <i class="fa-solid fa-circle-check"></i>
                             </button>
                         </form>
                     </div>

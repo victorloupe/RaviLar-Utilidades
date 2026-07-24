@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaviLar Utilidades — Nossos Links</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1B2A41;
+    --navy-soft:#5B6B80;
+    --gold:#C9A063;
+    --gold-deep:#B08A4E;
+    --bg:#FFFFFF;
+    --pill-bg:#EFE7D6;
+    --line:#E7E1D3;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:'Inter', sans-serif;
+    color:var(--navy);
+    background: linear-gradient(135deg, #FFFFFF 0%, #FAF6EE 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Decorative Background Glows */
+  body::before, body::after {
+    content: "";
+    position: fixed;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    z-index: -1;
+    filter: blur(90px);
+    opacity: 0.12;
+    pointer-events: none;
+  }
+  body::before {
+    background: var(--gold);
+    top: -50px;
+    left: -100px;
+  }
+  body::after {
+    background: var(--navy);
+    bottom: 50px;
+    right: -100px;
+  }
+
+  /* ---------- NAV (matches the site) ---------- */
+  nav{
+    display:flex; align-items:center; justify-content:center;
+    padding:14px 20px;
+    border-bottom:1px solid var(--line);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo-wrap img{ height:50px; width:auto; display:block; }
+
+  /* ---------- MAIN ---------- */
+  main{
+    max-width:480px;
+    margin:0 auto;
+    padding:24px 24px 40px;
+    text-align:center;
+    flex: 1 0 auto;
+    width: 100%;
+  }
+
+  .pill{
+    display:inline-block;
+    padding:9px 22px;
+    border-radius:30px;
+    background:var(--pill-bg);
+    color:var(--gold-deep);
+    font-weight:700;
+    font-size:11.5px;
+    letter-spacing:2.5px;
+    text-transform:uppercase;
+    opacity:0; transform:translateY(8px);
+    animation: fadeUp .5s ease forwards .05s;
+  }
+
+  .brand-title{
+    font-family:'Poppins', sans-serif;
+    font-weight:800;
+    font-size:22px;
+    line-height:1.2;
+    margin: 16px 0 8px;
+    opacity:0; transform:translateY(8px);
+    animation: fadeUp .5s ease forwards .1s;
+  }
+
+  .brand-desc{
+    font-size:13px;
+    line-height:1.5;
+    color:var(--navy-soft);
+    margin: 0 0 24px;
+    opacity:0; transform:translateY(8px);
+    animation: fadeUp .5s ease forwards .18s;
+  }
+
+  .cta-title{
+    font-family:'Poppins', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    line-height:1.2;
+    margin: 0 0 6px;
+    color: var(--navy);
+    opacity:0; transform:translateY(8px);
+    animation: fadeUp .5s ease forwards .24s;
+  }
+
+  p.sub{
+    font-size:12.5px;
+    line-height:1.5;
+    color:var(--navy-soft);
+    margin: 0 0 28px;
+    opacity:0; transform:translateY(8px);
+    animation: fadeUp .5s ease forwards .3s;
+  }
+
+  @keyframes fadeUp{ 
+    0% {
+      opacity: 0;
+      transform: translateY(20px) scale(0.98);
+    }
+    100% { 
+      opacity: 1; 
+      transform: translateY(0) scale(1); 
+    } 
+  }
+
+  .links{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .btn{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    padding:16px 20px;
+    border-radius:12px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:15.5px;
+    text-decoration:none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity:0; 
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .links a:nth-child(1){ animation-delay:.38s; }
+  .links a:nth-child(2){ animation-delay:.46s; }
+  .links a:nth-child(3){ animation-delay:.54s; }
+  .links a:nth-child(4){ animation-delay:.62s; }
+
+  .btn-icon{
+    width:22px; height:22px; flex:none;
+    display:flex; align-items:center; justify-content:center;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn:hover .btn-icon{ transform: scale(1.15); }
+  .btn-icon svg{ width:100%; height:100%; }
+
+  .btn-label{ flex:1; text-align:left; }
+
+  .btn-arrow{ flex:none; transition: transform .25s cubic-bezier(0.4, 0, 0.2, 1); }
+  .btn:hover .btn-arrow{ transform:translateX(5px); }
+
+  .btn-primary{
+    background:var(--navy);
+    color:#fff;
+    border:1px solid var(--navy);
+    box-shadow: 0 4px 6px -1px rgba(27, 42, 65, 0.08);
+  }
+  .btn-primary .btn-icon{ color:var(--gold); }
+  .btn-primary:hover{
+    transform:translateY(-3px) scale(1.015);
+    background: #233550;
+    box-shadow:0 12px 24px -10px rgba(27,42,65,0.35);
+  }
+
+  .btn-outline{
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color:var(--navy);
+    border:1.4px solid var(--line);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+  }
+  .btn-outline .btn-icon{ color:var(--gold-deep); }
+  .btn-outline:hover{
+    border-color:var(--gold);
+    background: rgba(250, 248, 245, 0.85);
+    transform:translateY(-3px) scale(1.015);
+    box-shadow:0 12px 20px -8px rgba(201, 160, 99, 0.25);
+  }
+
+  footer{
+    text-align:center;
+    padding:24px 20px;
+    font-size:12px;
+    color:var(--navy-soft);
+    border-top:1px solid var(--line);
+    background:rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    margin-top:auto;
+    width:100%;
+  }
+  footer span{ color:var(--gold-deep); font-weight:700; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo-wrap">
+    <img src="LogoSite.png" alt="RaviLar Utilidades">
+  </div>
+</nav>
+
+<main>
+  <span class="pill">Tudo para a sua casa</span>
+  <h1 class="brand-title">Praticidade e elegância<br>para o seu lar</h1>
+  <p class="brand-desc">Descubra nossa linha de utensílios domésticos e organizadores selecionados para facilitar o seu dia a dia e transformar a sua cozinha com beleza e funcionalidade.</p>
+  
+  <h2 class="cta-title">Onde você quer nos encontrar?</h2>
+  <p class="sub">Envio para todo o Brasil.<br>Escolha um dos links abaixo.</p>
+
+  <div class="links">
+    <a class="btn btn-outline" href="https://instagram.com/ravilarutilidades" target="_blank" rel="noopener">
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17.3" cy="6.7" r="0.6" fill="currentColor" stroke="none"/></svg>
+      </span>
+      <span class="btn-label">Instagram</span>
+      <span class="btn-arrow">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1B2A41" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+    <a class="btn btn-outline" href="https://vt.tiktok.com/ZSXsJG1ko/?page=TikTokShop" target="_blank" rel="noopener">
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v10.5a3.5 3.5 0 1 1-3-3.46V3z"/><path d="M14 6.4c1.4 1.6 3 2.2 5 2.2V5c-2 0-3.6-.7-5-1.8"/></svg>
+      </span>
+      <span class="btn-label">TikTok Shop</span>
+      <span class="btn-arrow">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1B2A41" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+    <a class="btn btn-outline" href="https://br.shp.ee/mhNgbu1m" target="_blank" rel="noopener">
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>
+      </span>
+      <span class="btn-label">Shopee</span>
+      <span class="btn-arrow">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1B2A41" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+
+    <a class="btn btn-outline" href="https://ravilarutilidades.com.br" target="_blank" rel="noopener">
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>
+      </span>
+      <span class="btn-label">Loja Oficial</span>
+      <span class="btn-arrow">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1B2A41" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </span>
+    </a>
+  </div>
+</main>
+
+<footer>Feito com carinho por <span>RaviLar Utilidades</span></footer>
+
+<!-- Supabase JS Client Library -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // SUPABASE CLIENT CONFIGURATION (matching admin.js/app.js)
+  const supabaseUrl = "https://wbgdyheswfzgxaxvhugv.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndiZ2R5aGVzd2Z6Z3hheHZodWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5Mzk1OTIsImV4cCI6MjA5OTUxNTU5Mn0.kvPoOJIoqHPpUfA3PFBPFuQ0yDALS1LOChd2bYCGoMs";
+  const supabaseClient = window.supabase ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+
+  const LINK_ICONS = {
+    instagram: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17.3" cy="6.7" r="0.6" fill="currentColor" stroke="none"/></svg>`,
+    tiktok: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v10.5a3.5 3.5 0 1 1-3-3.46V3z"/><path d="M14 6.4c1.4 1.6 3 2.2 5 2.2V5c-2 0-3.6-.7-5-1.8"/></svg>`,
+    shopee: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>`,
+    web: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
+    whatsapp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
+    fallback: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`
+  };
+
+  function getLinkIconHTML(imageKeyOrUrl, label = "") {
+    if (!imageKeyOrUrl) {
+      return LINK_ICONS.fallback;
+    }
+    if (imageKeyOrUrl.startsWith("http://") || imageKeyOrUrl.startsWith("https://") || imageKeyOrUrl.startsWith("data:")) {
+      return `<img src="${imageKeyOrUrl}" alt="${label}" style="width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 4px;">`;
+    }
+    if (imageKeyOrUrl.startsWith("<svg")) {
+      return imageKeyOrUrl;
+    }
+    if (LINK_ICONS[imageKeyOrUrl]) {
+      return LINK_ICONS[imageKeyOrUrl];
+    }
+    return LINK_ICONS.fallback;
+  }
+
+  async function loadLinks() {
+    if (!supabaseClient) return;
+    try {
+      const { data, error } = await supabaseClient
+        .from("store_settings")
+        .select("*")
+        .eq("key", "links_page_config")
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      
+      if (data && data.value) {
+        const links = JSON.parse(data.value);
+        renderLinks(links);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar links:", err);
+    }
+  }
+
+  function renderLinks(links) {
+    const container = document.querySelector('.links');
+    if (!container || !links || links.length === 0) return;
+    
+    container.innerHTML = '';
+    links.forEach((link, index) => {
+      const a = document.createElement('a');
+      a.className = 'btn btn-outline';
+      a.href = link.url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.style.animationDelay = `${0.38 + index * 0.08}s`;
+      
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'btn-icon';
+      iconSpan.innerHTML = getLinkIconHTML(link.image, link.label);
+      
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'btn-label';
+      labelSpan.textContent = link.label;
+      
+      const arrowSpan = document.createElement('span');
+      arrowSpan.className = 'btn-arrow';
+      arrowSpan.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1B2A41" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+      
+      a.appendChild(iconSpan);
+      a.appendChild(labelSpan);
+      a.appendChild(arrowSpan);
+      
+      container.appendChild(a);
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', loadLinks);
+</script>
+
+</body>
+</html>

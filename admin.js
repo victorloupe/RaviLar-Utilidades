@@ -131,6 +131,26 @@ const shippingRuleModalClose = document.getElementById("shipping-rule-modal-clos
 let storeSettings = {};
 let shippingRules = [];
 
+// Store Links Management Elements
+const btnAddStoreLink = document.getElementById("btn-add-store-link");
+const storeLinkModal = document.getElementById("store-link-modal");
+const storeLinkModalClose = document.getElementById("store-link-modal-close");
+const storeLinkForm = document.getElementById("admin-store-link-form");
+const storeLinksListContainer = document.getElementById("admin-store-links-list");
+const linksPageUrlInput = document.getElementById("admin-links-page-url");
+const btnCopyLinksUrl = document.getElementById("btn-copy-links-url");
+const linkIconTypeSelect = document.getElementById("admin-link-icon-type");
+const linkUploadContainer = document.getElementById("link-upload-container");
+
+const linkDropZone = document.getElementById("link-drop-zone");
+const linkFileInput = document.getElementById("link-file-input");
+const linkProgressBar = document.getElementById("link-progress-bar");
+const linkProgressFill = document.getElementById("link-progress-fill");
+const linkProgressText = document.getElementById("link-progress-text");
+const linkImageInput = document.getElementById("admin-link-image");
+
+let storeLinks = []; // Holds list of custom links
+
 // Banner Management Elements
 const bannerForm = document.getElementById("admin-banner-form");
 const bannersList = document.getElementById("admin-banners-list");
@@ -249,6 +269,7 @@ async function loadAllDashboardData() {
     await loadAdminOrders();
     await loadStoreSettings();
     await loadShippingRules();
+    await loadStoreLinks();
     await loadCoupons();
     updateStats();
     initFlyerGenerator();
@@ -1555,6 +1576,68 @@ function bindEvents() {
     if (shippingRuleModalClose) {
         shippingRuleModalClose.addEventListener("click", () => {
             shippingRuleModal.style.display = "none";
+        });
+    }
+
+    // STORE LINKS EVENTS
+    if (btnAddStoreLink) {
+        btnAddStoreLink.addEventListener("click", () => openStoreLinkModal());
+    }
+    if (storeLinkModalClose) {
+        storeLinkModalClose.addEventListener("click", () => {
+            storeLinkModal.style.display = "none";
+        });
+    }
+    if (storeLinkForm) {
+        storeLinkForm.addEventListener("submit", saveStoreLink);
+    }
+    if (btnCopyLinksUrl) {
+        btnCopyLinksUrl.addEventListener("click", () => {
+            if (linksPageUrlInput) {
+                linksPageUrlInput.select();
+                linksPageUrlInput.setSelectionRange(0, 99999);
+                navigator.clipboard.writeText(linksPageUrlInput.value)
+                    .then(() => showToast("URL da página de links copiada!", "success"))
+                    .catch(() => showToast("Erro ao copiar link.", "error"));
+            }
+        });
+    }
+    if (linkIconTypeSelect) {
+        linkIconTypeSelect.addEventListener("change", (e) => {
+            const val = e.target.value;
+            if (val === "upload") {
+                if (linkUploadContainer) linkUploadContainer.style.display = "block";
+                if (linkImageInput) linkImageInput.value = "";
+            } else {
+                if (linkUploadContainer) linkUploadContainer.style.display = "none";
+                if (linkImageInput) linkImageInput.value = val;
+            }
+        });
+    }
+    if (linkDropZone) {
+        linkDropZone.addEventListener("click", () => linkFileInput.click());
+        linkDropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            linkDropZone.classList.add("dragover");
+        });
+        linkDropZone.addEventListener("dragleave", () => {
+            linkDropZone.classList.remove("dragover");
+        });
+        linkDropZone.addEventListener("drop", async (e) => {
+            e.preventDefault();
+            linkDropZone.classList.remove("dragover");
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                await handleLinkImageUpload(files[0]);
+            }
+        });
+    }
+    if (linkFileInput) {
+        linkFileInput.addEventListener("change", async () => {
+            const files = linkFileInput.files;
+            if (files.length > 0) {
+                await handleLinkImageUpload(files[0]);
+            }
         });
     }
 
@@ -5483,4 +5566,282 @@ function parsePrice(val) {
         clean = clean.replace(/\./g, "").replace(",", ".");
     }
     return parseFloat(clean) || 0;
+}
+
+// ==========================================================================
+// STORE CUSTOM LINKS MANAGEMENT (links.html)
+// ==========================================================================
+
+const LINK_ICONS = {
+    instagram: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px; height:24px;"><rect x="3" y="3" width="18" height="18" rx="5.5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17.3" cy="6.7" r="0.6" fill="currentColor" stroke="none"/></svg>`,
+    tiktok: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px; height:24px;"><path d="M14 3v10.5a3.5 3.5 0 1 1-3-3.46V3z"/><path d="M14 6.4c1.4 1.6 3 2.2 5 2.2V5c-2 0-3.6-.7-5-1.8"/></svg>`,
+    shopee: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px; height:24px;"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8a3 3 0 0 1 6 0"/></svg>`,
+    web: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px; height:24px;"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>`,
+    whatsapp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px; height:24px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
+    fallback: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:24px; height:24px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`
+};
+
+function getLinkIconHTML(imageKeyOrUrl, label = "") {
+    if (!imageKeyOrUrl) {
+        return LINK_ICONS.fallback;
+    }
+    if (imageKeyOrUrl.startsWith("http://") || imageKeyOrUrl.startsWith("https://") || imageKeyOrUrl.startsWith("data:")) {
+        return `<img src="${imageKeyOrUrl}" alt="${label}" style="width: 100%; height: 100%; object-fit: contain; display: block;">`;
+    }
+    if (imageKeyOrUrl.startsWith("<svg")) {
+        return imageKeyOrUrl;
+    }
+    if (LINK_ICONS[imageKeyOrUrl]) {
+        return LINK_ICONS[imageKeyOrUrl];
+    }
+    return LINK_ICONS.fallback;
+}
+
+async function loadStoreLinks() {
+    if (!supabaseClient) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from("store_settings")
+            .select("*")
+            .eq("key", "links_page_config")
+            .single();
+        
+        if (error && error.code !== 'PGRST116') {
+            throw error;
+        }
+
+        if (data && data.value) {
+            storeLinks = JSON.parse(data.value);
+        } else {
+            // Default fallbacks
+            storeLinks = [
+                { label: "Instagram", url: "https://instagram.com/ravilarutilidades", image: "instagram" },
+                { label: "TikTok Shop", url: "https://vt.tiktok.com/ZSXsJG1ko/?page=TikTokShop", image: "tiktok" },
+                { label: "Shopee", url: "https://br.shp.ee/mhNgbu1m", image: "shopee" },
+                { label: "Loja Oficial", url: "https://ravilarutilidades.com.br", image: "web" }
+            ];
+        }
+
+        if (linksPageUrlInput) {
+            linksPageUrlInput.value = window.location.origin + "/links.html";
+        }
+
+        renderStoreLinksList();
+    } catch (e) {
+        showToast("Erro ao carregar links: " + e.message, "error");
+    }
+}
+
+function renderStoreLinksList() {
+    if (!storeLinksListContainer) return;
+    storeLinksListContainer.innerHTML = "";
+
+    if (storeLinks.length === 0) {
+        storeLinksListContainer.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhum link cadastrado ainda.</div>`;
+        return;
+    }
+
+    storeLinks.forEach((link, index) => {
+        const row = document.createElement("div");
+        row.className = "link-item-row";
+        row.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: #fff; gap: 12px;";
+
+        const iconHTML = getLinkIconHTML(link.image, link.label);
+
+        row.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                <div style="width: 40px; height: 40px; border-radius: 4px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; background: #f7fafc; flex-shrink: 0; overflow: hidden; color: var(--primary-color);">
+                    ${iconHTML}
+                </div>
+                <div style="min-width: 0; flex: 1;">
+                    <strong style="display: block; font-size: 0.95rem; color: var(--text-color);">${escapeHTML(link.label)}</strong>
+                    <span style="display: block; font-size: 0.8rem; color: var(--text-muted); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHTML(link.url)}</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                <button class="btn btn-secondary btn-sm btn-order-up" data-index="${index}" style="padding: 6px 10px;" title="Mover para cima">
+                    <i class="fa-solid fa-arrow-up"></i>
+                </button>
+                <button class="btn btn-secondary btn-sm btn-order-down" data-index="${index}" style="padding: 6px 10px;" title="Mover para baixo">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </button>
+                <button class="btn btn-secondary btn-sm btn-edit-link" data-index="${index}" style="padding: 6px 10px;" title="Editar">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="btn btn-danger btn-sm btn-delete-link" data-index="${index}" style="padding: 6px 10px; background-color: var(--error-color); color: #fff;" title="Excluir">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        `;
+
+        // Bind events for this item
+        row.querySelector(".btn-order-up").addEventListener("click", () => moveStoreLink(index, -1));
+        row.querySelector(".btn-order-down").addEventListener("click", () => moveStoreLink(index, 1));
+        row.querySelector(".btn-edit-link").addEventListener("click", () => openStoreLinkModal(index));
+        row.querySelector(".btn-delete-link").addEventListener("click", () => deleteStoreLink(index));
+
+        storeLinksListContainer.appendChild(row);
+    });
+}
+
+function openStoreLinkModal(index = null) {
+    if (!storeLinkModal) return;
+
+    const modalTitle = document.getElementById("store-link-modal-title");
+    const linkIndexInput = document.getElementById("admin-store-link-index");
+    const linkLabelInput = document.getElementById("admin-link-label");
+    const linkUrlInput = document.getElementById("admin-link-url");
+
+    // Reset progress bar
+    if (linkProgressBar) linkProgressBar.classList.add("hide");
+
+    if (index !== null && storeLinks[index]) {
+        const link = storeLinks[index];
+        modalTitle.textContent = "Editar Link";
+        linkIndexInput.value = index;
+        linkLabelInput.value = link.label;
+        linkUrlInput.value = link.url;
+        
+        // Handle icon type select mapping
+        if (["instagram", "tiktok", "shopee", "web", "whatsapp", "fallback"].includes(link.image)) {
+            linkIconTypeSelect.value = link.image;
+            if (linkUploadContainer) linkUploadContainer.style.display = "none";
+            linkImageInput.value = link.image;
+        } else {
+            linkIconTypeSelect.value = "upload";
+            if (linkUploadContainer) linkUploadContainer.style.display = "block";
+            linkImageInput.value = link.image || "";
+        }
+    } else {
+        modalTitle.textContent = "Cadastrar Novo Link";
+        linkIndexInput.value = "";
+        linkLabelInput.value = "";
+        linkUrlInput.value = "";
+        linkIconTypeSelect.value = "upload";
+        if (linkUploadContainer) linkUploadContainer.style.display = "block";
+        linkImageInput.value = "";
+    }
+
+    storeLinkModal.style.display = "flex";
+}
+
+async function saveStoreLink(e) {
+    e.preventDefault();
+    const indexStr = document.getElementById("admin-store-link-index").value;
+    const label = document.getElementById("admin-link-label").value.trim();
+    const url = document.getElementById("admin-link-url").value.trim();
+    const image = linkImageInput.value.trim();
+
+    if (!label || !url || !image) {
+        showToast("Por favor, preencha todos os campos e selecione ou envie uma imagem.", "warning");
+        return;
+    }
+
+    const newLink = { label, url, image };
+
+    if (indexStr !== "") {
+        // Edit existing
+        const index = parseInt(indexStr);
+        if (!isNaN(index) && storeLinks[index]) {
+            storeLinks[index] = newLink;
+        }
+    } else {
+        // Add new
+        storeLinks.push(newLink);
+    }
+
+    storeLinkModal.style.display = "none";
+    await saveStoreLinksToDatabase();
+}
+
+async function deleteStoreLink(index) {
+    if (!storeLinks[index]) return;
+    
+    const confirmed = await showConfirm(`Tem certeza que deseja excluir o link "${storeLinks[index].label}"?`);
+    if (confirmed) {
+        storeLinks.splice(index, 1);
+        await saveStoreLinksToDatabase();
+    }
+}
+
+async function moveStoreLink(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= storeLinks.length) return;
+
+    // Swap elements
+    const temp = storeLinks[index];
+    storeLinks[index] = storeLinks[targetIndex];
+    storeLinks[targetIndex] = temp;
+
+    await saveStoreLinksToDatabase();
+}
+
+async function saveStoreLinksToDatabase() {
+    if (!supabaseClient) return;
+    try {
+        const { error } = await supabaseClient
+            .from("store_settings")
+            .upsert([
+                { key: 'links_page_config', value: JSON.stringify(storeLinks) }
+            ]);
+        if (error) throw error;
+        showToast("Configuração de links atualizada com sucesso!", "success");
+        renderStoreLinksList();
+    } catch (e) {
+        showToast("Erro ao salvar links no banco: " + e.message, "error");
+    }
+}
+
+async function handleLinkImageUpload(file) {
+    if (!supabaseClient) {
+        showToast("Erro: Cliente Supabase não inicializado.", "error");
+        return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+        showToast(`O arquivo de imagem excede o limite de 15MB.`, "error");
+        return;
+    }
+
+    linkProgressBar.classList.remove("hide");
+    linkProgressFill.style.width = "30%";
+    linkProgressText.textContent = "Preparando upload...";
+
+    const uploadFile = await compressImageFile(file);
+    const fileExt = uploadFile.name.split('.').pop();
+    const fileName = `link_${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    try {
+        linkProgressFill.style.width = "60%";
+        linkProgressText.textContent = "Carregando imagem...";
+
+        const { error: uploadError } = await supabaseClient
+            .storage
+            .from("product-media")
+            .upload(filePath, uploadFile);
+
+        if (uploadError) throw uploadError;
+
+        linkProgressFill.style.width = "90%";
+        
+        const { data: publicUrlData } = supabaseClient
+            .storage
+            .from("product-media")
+            .getPublicUrl(filePath);
+
+        if (publicUrlData && publicUrlData.publicUrl) {
+            linkImageInput.value = publicUrlData.publicUrl;
+            linkProgressFill.style.width = "100%";
+            linkProgressText.textContent = "Upload concluído!";
+            showToast("Imagem carregada com sucesso!", "success");
+        }
+    } catch (err) {
+        showToast("Erro ao fazer upload da imagem: " + err.message, "error");
+        console.error(err);
+    }
+
+    setTimeout(() => {
+        linkProgressBar.classList.add("hide");
+    }, 2000);
 }
